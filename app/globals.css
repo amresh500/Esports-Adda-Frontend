@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+
+
+
+:root {
+  --primary-gradient: linear-gradient( #111111 0%, #441415 59%);
+  font-family: var(--font-plus-jakarta-sans), sans-serif;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-primary-100 : #e0f2fe;
+  --color-primary : #bae6fd;
+  --font-plus-jakarta-sans: 'Plus Jakarta Sans', sans-serif;
+
+}
+
+/* @media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+} */
+
+body {
+  background: var(--primary-gradient);
+  color: var(--foreground);
+  font-family: var(--font-plus-jakarta-sans), sans-serif;
+  background-color: #fff;
+  color: #111;
+  margin: 0; line-height: normal;
+}
