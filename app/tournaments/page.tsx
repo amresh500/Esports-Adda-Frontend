@@ -243,6 +243,50 @@ const Tournaments: NextPage = () => {
     return tournament.participants?.some((p: any) => userTeamIds.includes(p.team));
   };
 
+  // Returns a reason string if the user cannot register, or null if they can
+  const getRegistrationBlockReason = (tournament: any): string | null => {
+    const token = localStorage.getItem("token");
+    if (!token) return "You must be logged in to register.";
+
+    if (tournament.status !== 'Upcoming') {
+      const labels: Record<string, string> = {
+        'Ongoing': 'This tournament is already ongoing.',
+        'Completed': 'This tournament has ended.',
+        'Cancelled': 'This tournament has been cancelled.',
+        'Overdue': 'This tournament is overdue.',
+        'Registration Closed': 'Registration is closed for this tournament.',
+      };
+      return labels[tournament.status] || 'Registration is not open.';
+    }
+
+    if (isUserTeamRegistered(tournament)) return null; // already registered — handled separately
+
+    if ((tournament.teams?.current ?? 0) >= (tournament.teams?.max ?? 0)) {
+      return 'This tournament is full. No more slots available.';
+    }
+
+    if (!userTeams.length) return 'You need to be part of a team to register.';
+
+    const hasEligibleTeam = userTeams.some((team: any) => {
+      const matchesByGame = team.game === tournament.game;
+      const matchesByRoster = team.games?.some((g: any) => g.game === tournament.game);
+      return matchesByGame || matchesByRoster;
+    });
+
+    if (!hasEligibleTeam) {
+      return `None of your teams play ${tournament.game}. You need a ${tournament.game} team to register.`;
+    }
+
+    return null;
+  };
+
+  // Returns teams eligible for a specific tournament game
+  const getEligibleTeams = (tournamentGame: string) => {
+    return userTeams.filter((team: any) => {
+      return team.game === tournamentGame || team.games?.some((g: any) => g.game === tournamentGame);
+    });
+  };
+
   const getUserTeamParticipantStatus = (tournament: any) => {
     if (!userTeams.length) return null;
     const userTeamIds = userTeams.map(team => team._id);
@@ -710,24 +754,55 @@ const Tournaments: NextPage = () => {
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: '8px' }}>
-                      <button
-                        style={{
-                          ...styles.actionButton,
-                          ...(isUserTeamRegistered(tournament) ? { backgroundColor: '#00B894', cursor: 'default' } : {})
-                        }}
-                        onClick={() => {
-                          if (tournament.status === 'Completed') {
-                            handleViewDetails(tournament);
-                          } else if (isUserTeamRegistered(tournament)) {
-                            handleViewDetails(tournament);
-                          } else {
-                            handleJoinTournament(tournament.id);
-                          }
-                        }}
-                      >
-                        {tournament.status === 'Completed' ? 'View Details' :
-                         isUserTeamRegistered(tournament) ? 'View Details' : 'Join'}
-                      </button>
+                      {(() => {
+                        const blockReason = getRegistrationBlockReason(tournament);
+                        const isRegistered = isUserTeamRegistered(tournament);
+                        const isCompleted = tournament.status === 'Completed';
+                        const blocked = !isRegistered && !!blockReason;
+
+                        return (
+                          <div style={{ position: 'relative', display: 'inline-block' }} className="group">
+                            <button
+                              style={{
+                                ...styles.actionButton,
+                                ...(isRegistered ? { backgroundColor: '#00B894', cursor: 'default' } : {}),
+                                ...(blocked ? { backgroundColor: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.35)', cursor: 'not-allowed', border: '1px solid rgba(255,255,255,0.1)' } : {}),
+                              }}
+                              disabled={blocked}
+                              onClick={() => {
+                                if (blocked) return;
+                                if (isCompleted || isRegistered) {
+                                  handleViewDetails(tournament);
+                                } else {
+                                  handleJoinTournament(tournament.id);
+                                }
+                              }}
+                            >
+                              {isCompleted ? 'View Details' : isRegistered ? 'View Details' : 'Join'}
+                            </button>
+                            {blocked && (
+                              <div style={{
+                                position: 'absolute',
+                                bottom: 'calc(100% + 8px)',
+                                left: '50%',
+                                transform: 'translateX(-50%)',
+                                backgroundColor: '#1a1a1a',
+                                border: '1px solid rgba(251,44,54,0.4)',
+                                color: '#ff6b6b',
+                                fontSize: '12px',
+                                padding: '8px 12px',
+                                borderRadius: '8px',
+                                whiteSpace: 'nowrap',
+                                zIndex: 50,
+                                pointerEvents: 'none',
+                                display: 'none',
+                              }} className="group-hover:!block">
+                                {blockReason}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                       {/* Payment status badge for paid tournaments */}
                       {isUserTeamRegistered(tournament) && tournament.entryFee > 0 && (() => {
                         const status = getUserTeamParticipantStatus(tournament);
@@ -900,35 +975,113 @@ const Tournaments: NextPage = () => {
                 </div>
               )}
 
-              <div style={{ marginBottom: '24px' }}>
-                <label style={{
-                  display: 'block',
-                  color: 'rgba(255, 255, 255, 0.8)',
-                  marginBottom: '8px',
-                  fontSize: '14px',
-                }}>
-                  Select Team
-                </label>
-                <select
-                  value={selectedTeamId}
-                  onChange={(e) => setSelectedTeamId(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '8px',
-                    color: 'white',
-                    fontSize: '16px',
-                  }}
-                >
-                  {userTeams.map((team: any) => (
-                    <option key={team._id} value={team._id} style={{ backgroundColor: '#2a2a2a' }}>
-                      {team.name} ({team.tag})
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {(() => {
+                const activeTournament = allTournaments.find(t => t.id === selectedTournamentId);
+                const tournamentGame = activeTournament?.game;
+                const eligibleTeams = getEligibleTeams(tournamentGame);
+                const ineligibleTeams = userTeams.filter((team: any) => !eligibleTeams.includes(team));
+                const selectedTeamIsIneligible = selectedTeamId && ineligibleTeams.some((t: any) => t._id === selectedTeamId);
+
+                return (
+                  <div style={{ marginBottom: '24px' }}>
+                    {/* Game mismatch info banner */}
+                    {tournamentGame && (
+                      <div style={{
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        border: '1px solid rgba(59, 130, 246, 0.3)',
+                        borderRadius: '8px',
+                        padding: '10px 14px',
+                        marginBottom: '12px',
+                        fontSize: '13px',
+                        color: '#93c5fd',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                      }}>
+                        🎮 This tournament is for <strong style={{ color: 'white' }}>{tournamentGame}</strong>. Only teams that play {tournamentGame} can register.
+                      </div>
+                    )}
+
+                    {/* No eligible teams warning */}
+                    {eligibleTeams.length === 0 && (
+                      <div style={{
+                        backgroundColor: 'rgba(251, 44, 54, 0.1)',
+                        border: '1px solid rgba(251, 44, 54, 0.4)',
+                        borderRadius: '8px',
+                        padding: '12px 14px',
+                        marginBottom: '12px',
+                        fontSize: '13px',
+                        color: '#ff6b6b',
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '8px',
+                      }}>
+                        <span>⚠️</span>
+                        <span>None of your teams play <strong>{tournamentGame}</strong>. You cannot register for this tournament with your current teams.</span>
+                      </div>
+                    )}
+
+                    {/* Selected team is wrong game warning */}
+                    {selectedTeamIsIneligible && (
+                      <div style={{
+                        backgroundColor: 'rgba(251, 191, 36, 0.1)',
+                        border: '1px solid rgba(251, 191, 36, 0.3)',
+                        borderRadius: '8px',
+                        padding: '10px 14px',
+                        marginBottom: '12px',
+                        fontSize: '13px',
+                        color: '#fbbf24',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                      }}>
+                        ⚠️ This team does not play <strong style={{ color: 'white' }}>{tournamentGame}</strong>. Registration will be rejected.
+                      </div>
+                    )}
+
+                    <label style={{
+                      display: 'block',
+                      color: 'rgba(255, 255, 255, 0.8)',
+                      marginBottom: '8px',
+                      fontSize: '14px',
+                    }}>
+                      Select Team
+                    </label>
+                    <select
+                      value={selectedTeamId}
+                      onChange={(e) => setSelectedTeamId(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        border: `1px solid ${selectedTeamIsIneligible ? 'rgba(251,191,36,0.5)' : 'rgba(255, 255, 255, 0.2)'}`,
+                        borderRadius: '8px',
+                        color: 'white',
+                        fontSize: '16px',
+                      }}
+                    >
+                      {eligibleTeams.length > 0 && (
+                        <optgroup label={`✓ ${tournamentGame} Teams`} style={{ backgroundColor: '#1a1a1a' }}>
+                          {eligibleTeams.map((team: any) => (
+                            <option key={team._id} value={team._id} style={{ backgroundColor: '#1a3a2a', color: '#86efac' }}>
+                              ✓ {team.name} ({team.tag})
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                      {ineligibleTeams.length > 0 && (
+                        <optgroup label="✗ Wrong Game (cannot register)" style={{ backgroundColor: '#1a1a1a' }}>
+                          {ineligibleTeams.map((team: any) => (
+                            <option key={team._id} value={team._id} style={{ backgroundColor: '#2a1a1a', color: '#fca5a5' }}>
+                              ✗ {team.name} ({team.tag}) — plays {team.game || 'unknown'}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                    </select>
+                  </div>
+                );
+              })()}
 
               {/* Payment section for paid tournaments */}
               {(() => {
@@ -1048,22 +1201,30 @@ const Tournaments: NextPage = () => {
                 >
                   {t.common.cancel}
                 </button>
-                <button
-                  onClick={handleRegisterTeam}
-                  style={{
-                    flex: 1,
-                    padding: '12px 24px',
-                    backgroundColor: '#155DFC',
-                    border: 'none',
-                    borderRadius: '8px',
-                    color: 'white',
-                    fontSize: '16px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {t.tournaments.registerTeam}
-                </button>
+                {(() => {
+                  const activeTournament = allTournaments.find(t => t.id === selectedTournamentId);
+                  const eligibleTeams = getEligibleTeams(activeTournament?.game);
+                  const teamIsIneligible = selectedTeamId && !eligibleTeams.some((t: any) => t._id === selectedTeamId);
+                  return (
+                    <button
+                      onClick={handleRegisterTeam}
+                      disabled={!!teamIsIneligible}
+                      style={{
+                        flex: 1,
+                        padding: '12px 24px',
+                        backgroundColor: teamIsIneligible ? 'rgba(255,255,255,0.1)' : '#155DFC',
+                        border: 'none',
+                        borderRadius: '8px',
+                        color: teamIsIneligible ? 'rgba(255,255,255,0.3)' : 'white',
+                        fontSize: '16px',
+                        fontWeight: '600',
+                        cursor: teamIsIneligible ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      {teamIsIneligible ? `Wrong game — select a ${activeTournament?.game} team` : t.tournaments.registerTeam}
+                    </button>
+                  );
+                })()}
               </div>
             </div>
           </div>
