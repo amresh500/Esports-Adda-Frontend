@@ -3,13 +3,13 @@
 import type { NextPage } from 'next';
 import { useState, useEffect } from 'react';
 import Image from "next/image";
-import axios from 'axios';
+import api from '@/lib/api';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+import { useLanguage } from '@/lib/LanguageContext';
 
 const Tournaments: NextPage = () => {
+  const { t } = useLanguage();
   const [selectedGame, setSelectedGame] = useState('All Games');
   const [selectedStatus, setSelectedStatus] = useState('All Status');
   const [prizePoolRange, setPrizePoolRange] = useState({ min: 0, max: 1000000 });
@@ -31,12 +31,14 @@ const Tournaments: NextPage = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedTournament, setSelectedTournament] = useState<any>(null);
   const [currentUserOrgId, setCurrentUserOrgId] = useState<string | null>(null);
+  const [paymentScreenshot, setPaymentScreenshot] = useState<string | null>(null);
+  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
 
   // Fetch tournaments from API
   useEffect(() => {
     const fetchTournaments = async () => {
       try {
-        const response = await axios.get(`${API_URL}/api/tournaments`);
+        const response = await api.get('/tournaments');
         const tournaments = response.data.data.tournaments || [];
 
         // Transform API data to match the component's format
@@ -47,7 +49,9 @@ const Tournaments: NextPage = () => {
           status: tournament.status === "registration_open" ? "Upcoming" :
                   tournament.status === "registration_closed" ? "Registration Closed" :
                   tournament.status === "ongoing" ? "Ongoing" :
-                  tournament.status === "completed" ? "Completed" : "Upcoming",
+                  tournament.status === "completed" ? "Completed" :
+                  tournament.status === "overdue" ? "Overdue" :
+                  tournament.status === "cancelled" ? "Cancelled" : "Upcoming",
           rawStatus: tournament.status,
           description: tournament.description || "",
           teams: {
@@ -60,7 +64,8 @@ const Tournaments: NextPage = () => {
             minute: '2-digit'
           }),
           prizePool: tournament.prizePool?.amount || 0,
-          entryFee: 0, // Can be added to tournament model later
+          entryFee: tournament.entryFee?.amount || 0,
+          entryFeeData: tournament.entryFee || { amount: 0, currency: "NPR", paymentInstructions: "" },
           iconBg: '#FB2C36', // Default color
           startDate: new Date(tournament.tournamentStartDate),
           organizerName: tournament.organizerName,
@@ -89,16 +94,12 @@ const Tournaments: NextPage = () => {
 
         if (token) {
           if (accountType === "player") {
-            const response = await axios.get(`${API_URL}/api/profile/my`, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
+            const response = await api.get('/profile/my');
             const teams = response.data.data.profile.teams || [];
             console.log("Player teams loaded:", teams);
             setUserTeams(teams);
           } else if (accountType === "organization") {
-            const response = await axios.get(`${API_URL}/api/org-auth/me`, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
+            const response = await api.get('/org-auth/me');
             const org = response.data.data.organization;
             const teams = org.teams || [];
             console.log("Organization teams loaded:", teams);
@@ -145,37 +146,43 @@ const Tournaments: NextPage = () => {
 
   const handleRegisterTeam = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const url = `${API_URL}/api/tournaments/${selectedTournamentId}/register`;
+      // For paid tournaments, include the screenshot
+      const selectedTournament = allTournaments.find(t => t.id === selectedTournamentId);
+      const isPaid = selectedTournament?.entryFee > 0;
 
-      console.log("Registering team:", {
-        url,
-        tournamentId: selectedTournamentId,
-        teamId: selectedTeamId,
-        hasToken: !!token,
-        API_URL
-      });
+      const requestBody: any = { teamId: selectedTeamId };
+      if (isPaid && paymentScreenshot) {
+        requestBody.paymentScreenshot = paymentScreenshot;
+      }
 
-      const response = await axios.post(
-        url,
-        { teamId: selectedTeamId },
-        { headers: { Authorization: `Bearer ${token}` } }
+      const response = await api.post(
+        `/tournaments/${selectedTournamentId}/register`,
+        requestBody
       );
 
       console.log("Registration successful:", response.data);
-      setRegistrationSuccess("Team registered successfully!");
+      setRegistrationSuccess(
+        response.data.data?.isPaidTournament
+          ? "Registration submitted! Payment is pending verification by the organizer."
+          : "Team registered successfully!"
+      );
       setShowRegistrationModal(false);
+      setPaymentScreenshot(null);
+      setScreenshotPreview(null);
 
       // Refresh tournaments
-      const tournamentsResponse = await axios.get(`${API_URL}/api/tournaments`);
+      const tournamentsResponse = await api.get('/tournaments');
       const tournaments = tournamentsResponse.data.data.tournaments || [];
       const transformedTournaments = tournaments.map((tournament: any) => ({
         id: tournament._id,
         game: tournament.game === "Other" ? tournament.customGame : tournament.game,
         title: tournament.name,
         status: tournament.status === "registration_open" ? "Upcoming" :
+                tournament.status === "registration_closed" ? "Registration Closed" :
                 tournament.status === "ongoing" ? "Ongoing" :
-                tournament.status === "completed" ? "Completed" : "Upcoming",
+                tournament.status === "completed" ? "Completed" :
+                tournament.status === "overdue" ? "Overdue" :
+                tournament.status === "cancelled" ? "Cancelled" : "Upcoming",
         description: tournament.description || "",
         teams: {
           current: tournament.participants?.length || 0,
@@ -187,7 +194,8 @@ const Tournaments: NextPage = () => {
           minute: '2-digit'
         }),
         prizePool: tournament.prizePool?.amount || 0,
-        entryFee: 0,
+        entryFee: tournament.entryFee?.amount || 0,
+        entryFeeData: tournament.entryFee || { amount: 0, currency: "NPR", paymentInstructions: "" },
         iconBg: '#FB2C36',
         startDate: new Date(tournament.tournamentStartDate),
         organizerName: tournament.organizerName,
@@ -198,7 +206,7 @@ const Tournaments: NextPage = () => {
       }));
       setAllTournaments(transformedTournaments);
 
-      setTimeout(() => setRegistrationSuccess(""), 3000);
+      setTimeout(() => setRegistrationSuccess(""), 5000);
     } catch (error: any) {
       console.error("Registration error - Full error object:", error);
       console.error("Error type:", error.constructor.name);
@@ -233,6 +241,13 @@ const Tournaments: NextPage = () => {
     if (!userTeams.length) return false;
     const userTeamIds = userTeams.map(team => team._id);
     return tournament.participants?.some((p: any) => userTeamIds.includes(p.team));
+  };
+
+  const getUserTeamParticipantStatus = (tournament: any) => {
+    if (!userTeams.length) return null;
+    const userTeamIds = userTeams.map(team => team._id);
+    const participant = tournament.participants?.find((p: any) => userTeamIds.includes(p.team));
+    return participant?.status || null;
   };
 
   const handleViewDetails = (tournament: any) => {
@@ -328,10 +343,16 @@ const Tournaments: NextPage = () => {
     switch(status) {
       case 'Upcoming':
         return { backgroundColor: 'rgba(0, 201, 80, 0.2)', borderColor: 'rgba(0, 201, 80, 0.3)', color: '#7BF1A8' };
+      case 'Registration Closed':
+        return { backgroundColor: 'rgba(99, 102, 241, 0.2)', borderColor: 'rgba(99, 102, 241, 0.3)', color: '#a5b4fc' };
       case 'Ongoing':
         return { backgroundColor: 'rgba(240, 177, 0, 0.2)', borderColor: 'rgba(240, 177, 0, 0.3)', color: '#FFDF20' };
       case 'Completed':
         return { backgroundColor: 'rgba(155, 155, 155, 0.2)', borderColor: 'rgba(155, 155, 155, 0.3)', color: '#CCCCCC' };
+      case 'Overdue':
+        return { backgroundColor: 'rgba(249, 115, 22, 0.2)', borderColor: 'rgba(249, 115, 22, 0.3)', color: '#fdba74' };
+      case 'Cancelled':
+        return { backgroundColor: 'rgba(239, 68, 68, 0.2)', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#fca5a5' };
       default:
         return { backgroundColor: 'rgba(0, 201, 80, 0.2)', borderColor: 'rgba(0, 201, 80, 0.3)', color: '#7BF1A8' };
     }
@@ -381,8 +402,8 @@ const Tournaments: NextPage = () => {
       <Header />
       <div style={styles.mainContent}>
         {/* Page Title */}
-        <h1 style={styles.pageTitle}>Tournaments</h1>
-        <p style={styles.pageSubtitle}>Discover and join competitive gaming tournaments</p>
+        <h1 style={styles.pageTitle}>{t.tournaments.title}</h1>
+        <p style={styles.pageSubtitle}>{t.tournaments.subtitle}</p>
 
         {/* Filter Bar */}
         <div style={styles.filterbar}>
@@ -553,8 +574,8 @@ const Tournaments: NextPage = () => {
                 </svg>
               </div>
               <div style={styles.statNumber}>{allTournaments.filter(t => t.status === 'Upcoming' || t.status === 'Ongoing').length}</div>
-              <div style={styles.statLabel}>Active Tournaments</div>
-              <div style={styles.statSubtext}>Available to join</div>
+              <div style={styles.statLabel}>{t.tournaments.activeTournaments}</div>
+              <div style={styles.statSubtext}>{t.tournaments.availableToJoin}</div>
             </div>
 
             <div style={styles.statCard}>
@@ -565,8 +586,8 @@ const Tournaments: NextPage = () => {
                 </svg>
               </div>
               <div style={styles.statNumber}>NPR {(allTournaments.reduce((sum, t) => sum + (t.prizePool || 0), 0) / 1000).toFixed(1)}K</div>
-              <div style={styles.statLabel}>Total Prize Pool</div>
-              <div style={styles.statSubtext}>Across all tournaments</div>
+              <div style={styles.statLabel}>{t.tournaments.totalPrizePool}</div>
+              <div style={styles.statSubtext}>{t.tournaments.acrossAllTournaments}</div>
             </div>
 
             <div style={styles.statCard}>
@@ -593,8 +614,8 @@ const Tournaments: NextPage = () => {
                 </svg>
               </div>
               <div style={styles.statNumber}>{allTournaments.length}</div>
-              <div style={styles.statLabel}>Total Tournaments</div>
-              <div style={styles.statSubtext}>All available</div>
+              <div style={styles.statLabel}>{t.esportsData.tournaments}</div>
+              <div style={styles.statSubtext}>{t.common.all}</div>
             </div>
           </div>
         )}
@@ -638,7 +659,7 @@ const Tournaments: NextPage = () => {
           <div style={styles.tournamentCards}>
             {sortedTournaments.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(255, 255, 255, 0.6)' }}>
-                <p style={{ fontSize: '18px' }}>No tournaments found matching your filters.</p>
+                <p style={{ fontSize: '18px' }}>{t.tournaments.noTournamentsFound}</p>
               </div>
             ) : (
               sortedTournaments.map(tournament => (
@@ -680,12 +701,12 @@ const Tournaments: NextPage = () => {
                   <div style={styles.tournamentCardActions}>
                     <div style={styles.prizeInfo}>
                       <div style={styles.prizeInfoRow}>
-                        <span style={styles.prizeLabel}>Prize Pool</span>
+                        <span style={styles.prizeLabel}>{t.tournaments.prizePool}</span>
                         <span style={styles.prizeValue}>NPR {tournament.prizePool.toLocaleString()}</span>
                       </div>
                       <div style={styles.prizeInfoRow}>
-                        <span style={styles.prizeLabel}>Entry Fee</span>
-                        <span style={styles.prizeValue}>{tournament.entryFee === 0 ? 'Free' : `NPR ${tournament.entryFee.toLocaleString()}`}</span>
+                        <span style={styles.prizeLabel}>{t.tournaments.entryFee}</span>
+                        <span style={styles.prizeValue}>{tournament.entryFee === 0 ? t.tournaments.free : `NPR ${tournament.entryFee.toLocaleString()}`}</span>
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: '8px' }}>
@@ -707,6 +728,32 @@ const Tournaments: NextPage = () => {
                         {tournament.status === 'Completed' ? 'View Details' :
                          isUserTeamRegistered(tournament) ? 'View Details' : 'Join'}
                       </button>
+                      {/* Payment status badge for paid tournaments */}
+                      {isUserTeamRegistered(tournament) && tournament.entryFee > 0 && (() => {
+                        const status = getUserTeamParticipantStatus(tournament);
+                        const badgeStyles: Record<string, { bg: string; border: string; color: string; text: string }> = {
+                          pending_approval: { bg: 'rgba(251, 191, 36, 0.15)', border: 'rgba(251, 191, 36, 0.4)', color: '#fbbf24', text: 'Awaiting Verification' },
+                          approved: { bg: 'rgba(34, 197, 94, 0.15)', border: 'rgba(34, 197, 94, 0.4)', color: '#22c55e', text: 'Payment Approved' },
+                          rejected: { bg: 'rgba(239, 68, 68, 0.15)', border: 'rgba(239, 68, 68, 0.4)', color: '#ef4444', text: 'Payment Declined' },
+                        };
+                        const badge = badgeStyles[status || ''];
+                        if (!badge) return null;
+                        return (
+                          <span style={{
+                            padding: '6px 12px',
+                            backgroundColor: badge.bg,
+                            border: `1px solid ${badge.border}`,
+                            borderRadius: '6px',
+                            color: badge.color,
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            display: 'flex',
+                            alignItems: 'center',
+                          }}>
+                            {badge.text}
+                          </span>
+                        );
+                      })()}
                       {(tournament.status === 'Ongoing' || tournament.status === 'Completed' || isUserTeamRegistered(tournament)) && (
                         <button
                           style={{
@@ -728,7 +775,7 @@ const Tournaments: NextPage = () => {
                             e.currentTarget.style.backgroundColor = 'rgba(147, 51, 234, 0.2)';
                           }}
                         >
-                          🏆 View Bracket
+                          🏆 {t.tournaments.viewBracket}
                         </button>
                       )}
                       {currentUserOrgId && tournament.organizerId === currentUserOrgId && (
@@ -883,11 +930,109 @@ const Tournaments: NextPage = () => {
                 </select>
               </div>
 
+              {/* Payment section for paid tournaments */}
+              {(() => {
+                const tournament = allTournaments.find(t => t.id === selectedTournamentId);
+                const isPaid = tournament?.entryFee > 0;
+                if (!isPaid) return null;
+                return (
+                  <div style={{ marginBottom: '24px' }}>
+                    <div style={{
+                      backgroundColor: 'rgba(251, 191, 36, 0.1)',
+                      border: '1px solid rgba(251, 191, 36, 0.3)',
+                      borderRadius: '8px',
+                      padding: '16px',
+                      marginBottom: '16px',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                        <span style={{ fontSize: '18px' }}>💰</span>
+                        <span style={{ color: '#fbbf24', fontWeight: '600', fontSize: '16px' }}>
+                          Entry Fee: NPR {tournament.entryFee.toLocaleString()}
+                        </span>
+                      </div>
+                      <p style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '14px', marginBottom: '8px' }}>
+                        Payment Instructions:
+                      </p>
+                      <p style={{
+                        color: 'white',
+                        fontSize: '14px',
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        padding: '12px',
+                        borderRadius: '6px',
+                        whiteSpace: 'pre-wrap',
+                      }}>
+                        {tournament.entryFeeData?.paymentInstructions || "Contact the organizer for payment details."}
+                      </p>
+                    </div>
+
+                    <label style={{
+                      display: 'block',
+                      color: 'rgba(255, 255, 255, 0.8)',
+                      marginBottom: '8px',
+                      fontSize: '14px',
+                    }}>
+                      Upload Payment Screenshot *
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        if (file.size > 500 * 1024) {
+                          setRegistrationError(`Screenshot is too large (${(file.size / 1024).toFixed(0)}KB). Please upload an image under 500KB.`);
+                          e.target.value = "";
+                          setPaymentScreenshot(null);
+                          setScreenshotPreview(null);
+                          return;
+                        }
+                        setRegistrationError("");
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          const base64 = reader.result as string;
+                          setPaymentScreenshot(base64);
+                          setScreenshotPreview(base64);
+                        };
+                        reader.readAsDataURL(file);
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: '8px',
+                        color: 'white',
+                        fontSize: '14px',
+                      }}
+                    />
+                    {screenshotPreview && (
+                      <div style={{ marginTop: '12px' }}>
+                        <img
+                          src={screenshotPreview}
+                          alt="Payment screenshot preview"
+                          style={{
+                            maxWidth: '100%',
+                            maxHeight: '200px',
+                            borderRadius: '8px',
+                            border: '1px solid rgba(255, 255, 255, 0.2)',
+                          }}
+                        />
+                      </div>
+                    )}
+                    <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '12px', marginTop: '6px' }}>
+                      Max 500KB. JPEG, PNG or WebP.
+                    </p>
+                  </div>
+                );
+              })()}
+
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button
                   onClick={() => {
                     setShowRegistrationModal(false);
                     setRegistrationError('');
+                    setPaymentScreenshot(null);
+                    setScreenshotPreview(null);
                   }}
                   style={{
                     flex: 1,
@@ -901,7 +1046,7 @@ const Tournaments: NextPage = () => {
                     cursor: 'pointer',
                   }}
                 >
-                  Cancel
+                  {t.common.cancel}
                 </button>
                 <button
                   onClick={handleRegisterTeam}
@@ -917,7 +1062,7 @@ const Tournaments: NextPage = () => {
                     cursor: 'pointer',
                   }}
                 >
-                  Register Team
+                  {t.tournaments.registerTeam}
                 </button>
               </div>
             </div>
@@ -1018,14 +1163,14 @@ const Tournaments: NextPage = () => {
                 </div>
 
                 <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', padding: '16px', borderRadius: '8px' }}>
-                  <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '14px', marginBottom: '4px' }}>Prize Pool</p>
+                  <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '14px', marginBottom: '4px' }}>{t.tournaments.prizePool}</p>
                   <p style={{ color: 'white', fontSize: '16px', fontWeight: '600' }}>
                     NPR {selectedTournament.prizePool.toLocaleString()}
                   </p>
                 </div>
 
                 <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', padding: '16px', borderRadius: '8px' }}>
-                  <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '14px', marginBottom: '4px' }}>Entry Fee</p>
+                  <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '14px', marginBottom: '4px' }}>{t.tournaments.entryFee}</p>
                   <p style={{ color: 'white', fontSize: '16px', fontWeight: '600' }}>
                     {selectedTournament.entryFee === 0 ? 'Free' : `NPR ${selectedTournament.entryFee.toLocaleString()}`}
                   </p>
@@ -1104,7 +1249,7 @@ const Tournaments: NextPage = () => {
                       cursor: 'pointer',
                     }}
                   >
-                    Register Team
+                    {t.tournaments.registerTeam}
                   </button>
                 )}
                 {(selectedTournament.status === 'Ongoing' || selectedTournament.status === 'Completed' || isUserTeamRegistered(selectedTournament)) && (
@@ -1121,7 +1266,7 @@ const Tournaments: NextPage = () => {
                       cursor: 'pointer',
                     }}
                   >
-                    🏆 View Bracket
+                    🏆 {t.tournaments.viewBracket}
                   </button>
                 )}
               </div>
@@ -1146,18 +1291,18 @@ const styles: { [key: string]: React.CSSProperties } = {
   mainContent: {
     maxWidth: '1200px',
     margin: '0 auto',
-    padding: '40px 24px 40px',
+    padding: '24px 16px 40px',
   },
   pageTitle: {
-    fontSize: '36px',
+    fontSize: 'clamp(24px, 5vw, 36px)',
     fontWeight: '600',
     marginBottom: '8px',
     color: '#fff',
   },
   pageSubtitle: {
-    fontSize: '18px',
+    fontSize: 'clamp(14px, 3vw, 18px)',
     color: 'rgba(255, 255, 255, 0.68)',
-    marginBottom: '40px',
+    marginBottom: '24px',
   },
   filterbar: {
     borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
@@ -1166,8 +1311,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   filterContainer: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '24px',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+    gap: '16px',
   },
   filterGroup: {
     display: 'flex',
@@ -1228,16 +1373,16 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   featuredSection: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-    gap: '24px',
-    marginBottom: '48px',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))',
+    gap: '16px',
+    marginBottom: '32px',
   },
   featuredCard: {
     position: 'relative',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     border: '1px solid rgba(255, 255, 255, 0.2)',
     borderRadius: '14px',
-    padding: '32px',
+    padding: '20px',
     backdropFilter: 'blur(6px)',
     overflow: 'hidden',
   },
@@ -1266,9 +1411,9 @@ const styles: { [key: string]: React.CSSProperties } = {
     marginBottom: '16px',
   },
   featuredTitle: {
-    fontSize: '30px',
+    fontSize: 'clamp(20px, 4vw, 30px)',
     fontWeight: '600',
-    marginBottom: '16px',
+    marginBottom: '12px',
     color: '#fff',
   },
   featuredDesc: {
@@ -1279,8 +1424,9 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   featuredInfo: {
     display: 'flex',
-    gap: '32px',
-    marginBottom: '24px',
+    flexWrap: 'wrap' as const,
+    gap: '16px',
+    marginBottom: '16px',
   },
   featuredInfoItem: {
     display: 'flex',
@@ -1312,12 +1458,14 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   tournamentListHeader: {
     display: 'flex',
+    flexWrap: 'wrap' as const,
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '32px',
+    gap: '12px',
+    marginBottom: '24px',
   },
   tournamentListTitle: {
-    fontSize: '30px',
+    fontSize: 'clamp(22px, 4vw, 30px)',
     fontWeight: '600',
     color: '#fff',
   },
@@ -1341,16 +1489,17 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   tournamentCard: {
     display: 'flex',
+    flexWrap: 'wrap' as const,
     alignItems: 'center',
-    gap: '24px',
-    padding: '24px',
+    gap: '16px',
+    padding: '16px',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     border: '1px solid rgba(255, 255, 255, 0.2)',
     borderRadius: '14px',
   },
   gameIcon: {
-    width: '64px',
-    height: '64px',
+    width: '48px',
+    height: '48px',
     borderRadius: '10px',
     display: 'flex',
     alignItems: 'center',
@@ -1385,7 +1534,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   tournamentCardMeta: {
     display: 'flex',
-    gap: '24px',
+    flexWrap: 'wrap' as const,
+    gap: '12px',
   },
   metaItem: {
     display: 'flex',
@@ -1396,8 +1546,10 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   tournamentCardActions: {
     display: 'flex',
+    flexWrap: 'wrap' as const,
     alignItems: 'center',
-    gap: '24px',
+    gap: '12px',
+    width: '100%',
   },
   prizeInfo: {
     display: 'flex',
@@ -1408,7 +1560,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    minWidth: '180px',
+    minWidth: '140px',
   },
   prizeLabel: {
     fontSize: '14px',

@@ -5,8 +5,10 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { authAPI } from "@/lib/api";
+import { useLanguage } from "@/lib/LanguageContext";
 
 export default function AboutPage() {
+  const { t } = useLanguage();
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
@@ -31,10 +33,10 @@ export default function AboutPage() {
         <div className="max-w-6xl mx-auto relative z-10">
           <div className="text-center mb-12">
             <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 font-plus-jakarta">
-              About <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">Esports Adda</span>
+              <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">{t.about.title}</span>
             </h1>
             <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto">
-              Nepal's Premier Esports Platform - Connecting Players, Teams, and Organizations
+              {t.home.heroSubtitle}
             </p>
           </div>
         </div>
@@ -44,12 +46,9 @@ export default function AboutPage() {
       <section className="py-16 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 md:p-12 border border-white/20">
-            <h2 className="text-4xl font-bold text-white mb-6 text-center">Our Mission</h2>
+            <h2 className="text-4xl font-bold text-white mb-6 text-center">{t.about.mission}</h2>
             <p className="text-lg text-gray-300 text-center max-w-4xl mx-auto leading-relaxed">
-              Esports Adda is dedicated to fostering and growing the esports ecosystem in Nepal and beyond.
-              We provide a comprehensive platform that brings together individual players, competitive teams,
-              professional organizations, and tournament organizers in one unified space. Our goal is to make
-              competitive gaming accessible, organized, and professional for everyone.
+              {t.about.missionText}
             </p>
           </div>
         </div>
@@ -58,7 +57,7 @@ export default function AboutPage() {
       {/* What We Offer Section */}
       <section className="py-16 px-4">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl font-bold text-white mb-12 text-center">What We Offer</h2>
+          <h2 className="text-4xl font-bold text-white mb-12 text-center">{t.about.features}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* Tournament Management */}
             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 hover:border-purple-500 transition-all group">
@@ -67,9 +66,9 @@ export default function AboutPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                 </svg>
               </div>
-              <h3 className="text-2xl font-bold text-white mb-4">Tournament Discovery</h3>
+              <h3 className="text-2xl font-bold text-white mb-4">{t.about.feature1Title}</h3>
               <p className="text-gray-300">
-                Browse and participate in tournaments across multiple games. Find competitions that match your skill level and compete for glory.
+                {t.about.feature1Desc}
               </p>
             </div>
 
@@ -120,9 +119,9 @@ export default function AboutPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h3 className="text-2xl font-bold text-white mb-4">Live Streams</h3>
+              <h3 className="text-2xl font-bold text-white mb-4">{t.about.feature4Title}</h3>
               <p className="text-gray-300">
-                Watch live tournament streams submitted by organizers. Never miss a match with our integrated streaming platform.
+                {t.about.feature4Desc}
               </p>
             </div>
 
@@ -133,9 +132,9 @@ export default function AboutPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
               </div>
-              <h3 className="text-2xl font-bold text-white mb-4">Esports Data & News</h3>
+              <h3 className="text-2xl font-bold text-white mb-4">{t.about.feature3Title}</h3>
               <p className="text-gray-300">
-                Stay updated with the latest esports news, match results, player statistics, and industry insights.
+                {t.about.feature3Desc}
               </p>
             </div>
           </div>
@@ -320,7 +319,7 @@ export default function AboutPage() {
       {/* Why Esports Adda Section */}
       <section className="py-16 px-4">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl font-bold text-white mb-12 text-center">Why Choose Esports Adda?</h2>
+          <h2 className="text-4xl font-bold text-white mb-12 text-center">{t.about.vision}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="bg-gradient-to-br from-purple-600/20 to-pink-600/20 backdrop-blur-md rounded-2xl p-8 border border-white/20 text-center">
               <div className="text-5xl mb-4">🇳🇵</div>
@@ -381,24 +380,23 @@ export default function AboutPage() {
         <section className="py-20 px-4">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              Ready to Join the Community?
+              {t.about.feature2Title}
             </h2>
             <p className="text-xl text-gray-300 mb-8">
-              Whether you're a player, team owner, organization, or tournament organizer,
-              Esports Adda has everything you need to succeed in competitive gaming.
+              {t.about.feature2Desc}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/signup"
                 className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-lg font-bold text-lg hover:from-purple-700 hover:to-pink-700 transition-all"
               >
-                Create Account
+                {t.auth.signup}
               </Link>
               <Link
                 href="/tournaments"
                 className="bg-white/10 backdrop-blur-sm border-2 border-white text-white px-8 py-4 rounded-lg font-bold text-lg hover:bg-white/20 transition-all"
               >
-                Browse Tournaments
+                {t.home.exploreTournaments}
               </Link>
             </div>
           </div>

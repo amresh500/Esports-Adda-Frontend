@@ -162,7 +162,7 @@ export default function PublicBracketPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#1a0a0a]">
+      <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415]">
         <Header />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-white text-xl">Loading bracket...</div>
@@ -174,7 +174,7 @@ export default function PublicBracketPage() {
 
   if (error || !tournament) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#1a0a0a]">
+      <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415]">
         <Header />
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
           <div className="text-red-400 text-xl">{error || 'Tournament not found'}</div>
@@ -191,10 +191,10 @@ export default function PublicBracketPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#1a0a0a]">
+    <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415]">
       <Header />
 
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-7xl">
         {/* Back Button */}
         <button
           onClick={handleBack}
@@ -207,10 +207,10 @@ export default function PublicBracketPage() {
         </button>
 
         {/* Tournament Header */}
-        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 mb-6">
+        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-8 border border-white/20 mb-4 sm:mb-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <h1 className="text-4xl font-bold text-white mb-3">{tournament.name}</h1>
+              <h1 className="text-2xl sm:text-4xl font-bold text-white mb-2 sm:mb-3">{tournament.name}</h1>
               <div className="flex gap-2 flex-wrap">
                 <span className="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-sm">
                   {tournament.game === 'Other' ? tournament.customGame : tournament.game}
@@ -240,13 +240,13 @@ export default function PublicBracketPage() {
 
         {/* Tournament Winner Banner */}
         {tournament.status === 'completed' && tournament.winner?.teamName && (
-          <div className="bg-gradient-to-r from-yellow-500/20 via-amber-500/20 to-yellow-500/20 backdrop-blur-md rounded-2xl p-8 border border-yellow-500/40 mb-6">
+          <div className="bg-gradient-to-r from-yellow-500/20 via-amber-500/20 to-yellow-500/20 backdrop-blur-md rounded-2xl p-4 sm:p-8 border border-yellow-500/40 mb-4 sm:mb-6">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div className="text-5xl">🏆</div>
                 <div>
                   <p className="text-yellow-400 text-sm font-semibold uppercase tracking-wider">Tournament Champion</p>
-                  <p className="text-white text-3xl font-bold">{tournament.winner.teamName}</p>
+                  <p className="text-white text-xl sm:text-3xl font-bold">{tournament.winner.teamName}</p>
                 </div>
               </div>
               {tournament.runnerUp?.teamName && (
@@ -263,24 +263,24 @@ export default function PublicBracketPage() {
         )}
 
         {/* Tournament Info */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
-            <p className="text-gray-400 text-sm mb-1">Teams Registered</p>
-            <p className="text-white text-2xl font-bold">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 sm:p-6 border border-white/20">
+            <p className="text-gray-400 text-xs sm:text-sm mb-1">Teams Registered</p>
+            <p className="text-white text-lg sm:text-2xl font-bold">
               {tournament.participants?.length || 0} / {tournament.totalSlots}
             </p>
           </div>
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
-            <p className="text-gray-400 text-sm mb-1">Prize Pool</p>
-            <p className="text-white text-2xl font-bold">NPR {tournament.prizePool?.amount?.toLocaleString() || 0}</p>
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 sm:p-6 border border-white/20">
+            <p className="text-gray-400 text-xs sm:text-sm mb-1">Prize Pool</p>
+            <p className="text-white text-lg sm:text-2xl font-bold">NPR {tournament.prizePool?.amount?.toLocaleString() || 0}</p>
           </div>
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
-            <p className="text-gray-400 text-sm mb-1">Team Size</p>
-            <p className="text-white text-2xl font-bold">{tournament.teamSize} Players</p>
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 sm:p-6 border border-white/20">
+            <p className="text-gray-400 text-xs sm:text-sm mb-1">Team Size</p>
+            <p className="text-white text-lg sm:text-2xl font-bold">{tournament.teamSize} Players</p>
           </div>
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
-            <p className="text-gray-400 text-sm mb-1">Start Date</p>
-            <p className="text-white text-xl font-bold">
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 sm:p-6 border border-white/20">
+            <p className="text-gray-400 text-xs sm:text-sm mb-1">Start Date</p>
+            <p className="text-white text-base sm:text-xl font-bold">
               {new Date(tournament.tournamentStartDate).toLocaleDateString()}
             </p>
           </div>
@@ -288,9 +288,9 @@ export default function PublicBracketPage() {
 
         {/* Participating Teams */}
         {tournament.participants && tournament.participants.length > 0 && (
-          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 mb-6">
-            <h2 className="text-2xl font-bold text-white mb-6">Participating Teams</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-8 border border-white/20 mb-4 sm:mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">Participating Teams</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {tournament.participants.map((participant: any, index: number) => (
                 <div
                   key={participant._id || index}
@@ -312,10 +312,10 @@ export default function PublicBracketPage() {
         )}
 
         {/* Tournament Bracket */}
-        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-white">Tournament Bracket</h2>
-            <div className="flex items-center gap-3">
+        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 sm:p-8 border border-white/20 overflow-x-auto">
+          <div className="flex flex-wrap justify-between items-center gap-3 mb-4 sm:mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold text-white">Tournament Bracket</h2>
+            <div className="flex items-center gap-2 sm:gap-3">
               {isOrganizer && (
                 <span className="px-4 py-2 bg-green-500/20 border border-green-500 text-green-300 rounded-lg text-sm font-semibold">
                   ⚙️ Organizer View
@@ -358,10 +358,10 @@ export default function PublicBracketPage() {
                 const [bracket, , round] = key.split('-');
                 return (
                   <div key={key} className="space-y-3">
-                    <h3 className="text-xl font-bold text-white mb-4 capitalize sticky top-0 bg-[#0a0a0a]/80 backdrop-blur-sm py-2 px-4 rounded-lg border border-white/10">
+                    <h3 className="text-xl font-bold text-white mb-4 capitalize sticky top-0 bg-[#111111]/80 backdrop-blur-sm py-2 px-4 rounded-lg border border-white/10">
                       {bracket === 'main' ? 'Tournament' : bracket.replace('_', ' ')} {bracket !== 'finals' && `- Round ${round}`}
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                       {matches.map((match: any) => {
                         const isByeMatch = match.status === 'completed' &&
                           ((!match.participant1?.team && match.participant2?.team) ||

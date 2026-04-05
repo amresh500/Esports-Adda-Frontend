@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import axios from "axios";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { useLanguage } from "@/lib/LanguageContext";
 import Valorant from "@/components/icons/valorant";
 import CS2 from "@/components/icons/cs2";
 import PUBG from "@/components/icons/pubg";
@@ -23,6 +25,8 @@ const GAME_NAMES: Record<number, string> = {
 };
 
 export default function GamesPage() {
+  const router = useRouter();
+  const { t } = useLanguage();
   const [selectedGame, setSelectedGame] = useState(1);
   const [activeTab, setActiveTab] = useState<
     "teams" | "organizations" | "players"
@@ -277,21 +281,21 @@ export default function GamesPage() {
       <Header />
 
       {/* Hero Section */}
-      <div className="px-20 py-8">
-        <h1 className="font-plus-jakarta text-4xl text-white mb-2">
-          Competitive Games
+      <div className="px-4 sm:px-8 lg:px-20 py-6 sm:py-8">
+        <h1 className="font-plus-jakarta text-2xl sm:text-4xl text-white mb-2">
+          {t.games.title}
         </h1>
-        <p className="font-plus-jakarta text-lg text-white/70">
+        <p className="font-plus-jakarta text-sm sm:text-lg text-white/70">
           Explore games, teams, organizations, and top players in the esports
           ecosystem
         </p>
       </div>
 
       {/* Main Content */}
-      <div className="flex gap-6 px-20 pb-8 h-[calc(100vh-320px)]">
-        {/* Left: Games List */}
-        <div className="w-80 flex flex-col gap-3 overflow-y-auto pr-3">
-          <p className="font-arial text-xl text-white mb-2">All Games</p>
+      <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 px-4 sm:px-8 lg:px-20 pb-8 lg:h-[calc(100vh-320px)]">
+        {/* Left: Games List — horizontal scroll on mobile, vertical on desktop */}
+        <div className="flex lg:flex-col gap-3 overflow-x-auto lg:overflow-x-visible lg:overflow-y-auto lg:w-80 lg:pr-3 pb-2 lg:pb-0">
+          <p className="font-arial text-lg sm:text-xl text-white mb-2 flex-shrink-0">{t.tournaments.allGames}</p>
           {games.map((game) => {
             const GameIcon = game.icon;
             const counts = gameCounts[game.id];
@@ -299,7 +303,7 @@ export default function GamesPage() {
               <button
                 key={game.id}
                 onClick={() => setSelectedGame(game.id)}
-                className={`bg-white/10 backdrop-blur-sm rounded-2xl p-5 border transition-all duration-300 text-left w-full ${
+                className={`bg-white/10 backdrop-blur-sm rounded-2xl p-4 sm:p-5 border transition-all duration-300 text-left min-w-[160px] sm:min-w-[200px] lg:min-w-0 lg:w-full flex-shrink-0 ${
                   selectedGame === game.id
                     ? "border-white/40 bg-white/15"
                     : "border-white/20 hover:bg-white/15"
@@ -344,12 +348,12 @@ export default function GamesPage() {
         </div>
 
         {/* Right: Game Details with Tabs */}
-        <div className="flex-1 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/20 p-6 flex flex-col overflow-hidden">
+        <div className="flex-1 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/20 p-4 sm:p-6 flex flex-col overflow-hidden min-h-[400px] lg:min-h-0">
           {/* Tabs */}
-          <div className="flex gap-2 mb-6 border-b border-white/10 pb-4">
+          <div className="flex gap-2 mb-4 sm:mb-6 border-b border-white/10 pb-3 sm:pb-4 overflow-x-auto">
             <button
               onClick={() => setActiveTab("teams")}
-              className={`px-6 py-2.5 rounded-lg font-arial text-base transition-all ${
+              className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg font-arial text-sm sm:text-base transition-all flex-shrink-0 ${
                 activeTab === "teams"
                   ? "bg-white/15 text-white border border-white/30"
                   : "bg-transparent text-gray-400 hover:text-white"
@@ -359,7 +363,7 @@ export default function GamesPage() {
             </button>
             <button
               onClick={() => setActiveTab("organizations")}
-              className={`px-6 py-2.5 rounded-lg font-arial text-base transition-all ${
+              className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg font-arial text-sm sm:text-base transition-all flex-shrink-0 ${
                 activeTab === "organizations"
                   ? "bg-white/15 text-white border border-white/30"
                   : "bg-transparent text-gray-400 hover:text-white"
@@ -369,13 +373,40 @@ export default function GamesPage() {
             </button>
             <button
               onClick={() => setActiveTab("players")}
-              className={`px-6 py-2.5 rounded-lg font-arial text-base transition-all ${
+              className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg font-arial text-sm sm:text-base transition-all flex-shrink-0 ${
                 activeTab === "players"
                   ? "bg-white/15 text-white border border-white/30"
                   : "bg-transparent text-gray-400 hover:text-white"
               }`}
             >
               Players
+            </button>
+
+            {/* Community Hub button — navigates to the chat page */}
+            <button
+              onClick={() =>
+                router.push(
+                  `/games/${encodeURIComponent(
+                    GAME_NAMES[selectedGame]
+                  )}/community`
+                )
+              }
+              className="ml-auto px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg font-arial text-sm sm:text-base bg-gradient-to-r from-[#FF4655] to-[#D13639] text-white hover:from-[#FF5566] hover:to-[#E14748] transition-all flex items-center gap-2 flex-shrink-0"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                />
+              </svg>
+              {t.games.community}
             </button>
           </div>
 
@@ -422,25 +453,25 @@ export default function GamesPage() {
                             key={team.id}
                             className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20 hover:bg-white/15 transition-all cursor-pointer"
                           >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3 flex-1">
-                                <div className="w-6 text-center font-arial text-sm text-gray-500">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <div className="w-6 text-center font-arial text-sm text-gray-500 flex-shrink-0">
                                   #{team.ranking}
                                 </div>
                                 {team.logo ? (
                                   <img
                                     src={team.logo}
                                     alt={team.name}
-                                    className="w-10 h-10 rounded-lg object-cover"
+                                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg object-cover flex-shrink-0"
                                   />
                                 ) : (
-                                  <div className="w-10 h-10 bg-gradient-to-br from-[#6C5CE7] to-[#5B4CDB] rounded-lg flex items-center justify-center text-xs font-bold text-white">
+                                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-[#6C5CE7] to-[#5B4CDB] rounded-lg flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
                                     {team.tag}
                                   </div>
                                 )}
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-2">
-                                    <p className="font-arial text-base text-white font-semibold">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <p className="font-arial text-sm sm:text-base text-white font-semibold truncate">
                                       {team.name}
                                     </p>
                                     {team.tag && (
@@ -452,7 +483,7 @@ export default function GamesPage() {
                                       <span className="text-sm">&#127475;&#127477;</span>
                                     )}
                                   </div>
-                                  <p className="font-arial text-xs text-gray-400">
+                                  <p className="font-arial text-xs text-gray-400 truncate">
                                     {team.region}
                                     {team.orgName && (
                                       <span className="text-purple-400">
@@ -463,8 +494,8 @@ export default function GamesPage() {
                                   </p>
                                 </div>
                               </div>
-                              <div className="flex gap-5">
-                                <div className="text-right">
+                              <div className="flex gap-4 sm:gap-5 pl-9 sm:pl-0">
+                                <div className="text-left sm:text-right">
                                   <p className="font-arial text-xs text-gray-400">
                                     Players
                                   </p>
@@ -472,7 +503,7 @@ export default function GamesPage() {
                                     {team.players}
                                   </p>
                                 </div>
-                                <div className="text-right">
+                                <div className="text-left sm:text-right">
                                   <p className="font-arial text-xs text-gray-400">
                                     Tournaments
                                   </p>
@@ -480,7 +511,7 @@ export default function GamesPage() {
                                     {team.tournamentsPlayed}
                                   </p>
                                 </div>
-                                <div className="text-right">
+                                <div className="text-left sm:text-right">
                                   <p className="font-arial text-xs text-gray-400">
                                     Wins
                                   </p>

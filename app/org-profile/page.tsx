@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -26,9 +26,11 @@ const GAMES = [
 
 export default function OrganizationProfile() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialTab = (searchParams.get("tab") as "profile" | "teams" | "staff" | "achievements" | "tournaments") || "profile";
   const [organization, setOrganization] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"profile" | "teams" | "staff" | "achievements" | "tournaments">("profile");
+  const [activeTab, setActiveTab] = useState<"profile" | "teams" | "staff" | "achievements" | "tournaments">(initialTab);
   const [tournaments, setTournaments] = useState<any[]>([]);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -96,6 +98,11 @@ export default function OrganizationProfile() {
     prizePool: {
       amount: 0,
       currency: "NPR",
+    },
+    entryFee: {
+      amount: 0,
+      currency: "NPR",
+      paymentInstructions: "",
     },
     requirements: {
       isNepalOnly: false,
@@ -232,6 +239,11 @@ export default function OrganizationProfile() {
         prizePool: {
           amount: 0,
           currency: "NPR",
+        },
+        entryFee: {
+          amount: 0,
+          currency: "NPR",
+          paymentInstructions: "",
         },
         requirements: {
           isNepalOnly: false,
@@ -1201,6 +1213,44 @@ export default function OrganizationProfile() {
                         placeholder="50000"
                       />
                     </div>
+
+                    <div>
+                      <label className="block text-white mb-2">Entry Fee (NPR)</label>
+                      <input
+                        type="number"
+                        value={tournamentForm.entryFee.amount || ''}
+                        onChange={(e) =>
+                          setTournamentForm({
+                            ...tournamentForm,
+                            entryFee: { ...tournamentForm.entryFee, amount: parseInt(e.target.value) || 0 }
+                          })
+                        }
+                        min={0}
+                        className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-white/40"
+                        placeholder="0 for free tournament"
+                      />
+                    </div>
+
+                    {tournamentForm.entryFee.amount > 0 && (
+                      <div className="md:col-span-2">
+                        <label className="block text-white mb-2">Payment Instructions *</label>
+                        <textarea
+                          value={tournamentForm.entryFee.paymentInstructions}
+                          onChange={(e) =>
+                            setTournamentForm({
+                              ...tournamentForm,
+                              entryFee: { ...tournamentForm.entryFee, paymentInstructions: e.target.value }
+                            })
+                          }
+                          rows={3}
+                          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-white/40"
+                          placeholder="e.g. Pay NPR 500 to eSewa 98XXXXXXXX with your team name in remarks"
+                          maxLength={1000}
+                          required
+                        />
+                        <p className="text-gray-400 text-sm mt-1">Teams will see these instructions when registering and must upload a payment screenshot</p>
+                      </div>
+                    )}
 
                     <div>
                       <label className="block text-white mb-2">Stream URL (Optional)</label>

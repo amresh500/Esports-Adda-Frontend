@@ -45,6 +45,7 @@ export default function AdminDashboardPage() {
     registrationStartDate: '', registrationEndDate: '',
     tournamentStartDate: '', tournamentEndDate: '',
     prizePool: { amount: 0, currency: 'NPR' },
+    entryFee: { amount: 0, currency: 'NPR', paymentInstructions: '' },
     requirements: { isNepalOnly: false, minRank: '' },
     streamUrl: '', discordUrl: '',
   });
@@ -175,6 +176,7 @@ export default function AdminDashboardPage() {
         registrationStartDate: '', registrationEndDate: '',
         tournamentStartDate: '', tournamentEndDate: '',
         prizePool: { amount: 0, currency: 'NPR' },
+        entryFee: { amount: 0, currency: 'NPR', paymentInstructions: '' },
         requirements: { isNepalOnly: false, minRank: '' },
         streamUrl: '', discordUrl: '',
       });
@@ -546,6 +548,35 @@ export default function AdminDashboardPage() {
                           className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-white/40"
                           placeholder="50000" />
                       </div>
+                      <div>
+                        <label className="block text-white mb-2">Entry Fee (NPR)</label>
+                        <input type="number" value={tournamentForm.entryFee.amount || ''}
+                          onChange={(e) => setTournamentForm({
+                            ...tournamentForm,
+                            entryFee: { ...tournamentForm.entryFee, amount: parseInt(e.target.value) || 0 }
+                          })}
+                          min={0}
+                          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-white/40"
+                          placeholder="0 for free tournament" />
+                      </div>
+                      {tournamentForm.entryFee.amount > 0 && (
+                        <div className="md:col-span-2">
+                          <label className="block text-white mb-2">Payment Instructions *</label>
+                          <textarea
+                            value={tournamentForm.entryFee.paymentInstructions}
+                            onChange={(e) => setTournamentForm({
+                              ...tournamentForm,
+                              entryFee: { ...tournamentForm.entryFee, paymentInstructions: e.target.value }
+                            })}
+                            rows={3}
+                            className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-white/40"
+                            placeholder="e.g. Pay NPR 500 to eSewa 98XXXXXXXX with your team name in remarks"
+                            maxLength={1000}
+                            required
+                          />
+                          <p className="text-gray-400 text-sm mt-1">Teams will see these instructions when registering and must upload a payment screenshot</p>
+                        </div>
+                      )}
                       <div>
                         <label className="block text-white mb-2">Stream URL</label>
                         <input type="url" value={tournamentForm.streamUrl}

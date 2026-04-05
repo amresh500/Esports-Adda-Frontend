@@ -8,10 +8,12 @@ import Link from "next/link";
 import { authAPI } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { useLanguage } from "@/lib/LanguageContext";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 const LoginPage = () => {
+  const { t } = useLanguage();
   const router = useRouter();
   const [accountType, setAccountType] = useState<"player" | "organization">("player");
   const [emailOrUsername, setEmailOrUsername] = useState("");
@@ -37,8 +39,14 @@ const LoginPage = () => {
         const response = await authAPI.login({ email: emailOrUsername, password, rememberMe });
 
         if (response.success) {
-          // Store account type for player
+          // Store account type, user ID, and admin flag for player
           localStorage.setItem("accountType", "player");
+          localStorage.setItem("userId", response.data.user.id);
+          if (response.data.user.isAdmin) {
+            localStorage.setItem("isAdmin", "true");
+          } else {
+            localStorage.removeItem("isAdmin");
+          }
 
           // Check if player is an Admin staff member of any organization
           try {
@@ -69,9 +77,10 @@ const LoginPage = () => {
           rememberMe
         });
 
-        // Store token and account type
+        // Store token, account type, and user ID
         localStorage.setItem("token", response.data.data.token);
         localStorage.setItem("accountType", "organization");
+        localStorage.setItem("userId", response.data.data.organization.id);
         localStorage.setItem("organizationData", JSON.stringify(response.data.data.organization));
 
         // Redirect to organization profile
@@ -103,7 +112,7 @@ const LoginPage = () => {
         <div className="bg-white/5 backdrop-blur-[3.1px] rounded-[20px] shadow-[4px_4px_21.2px_rgba(0,0,0,0.25)] p-6 sm:p-8 md:p-10">
           {/* Sign In Heading */}
           <h1 className="text-white text-center font-inter text-3xl sm:text-4xl lg:text-[36px] font-bold tracking-[-0.72px] mb-4">
-            Sign In
+            {t.auth.login}
           </h1>
 
           {/* Account Type Toggle */}
@@ -140,7 +149,7 @@ const LoginPage = () => {
               >
                 <Google height={24} width={24}/>
                 <span className="font-plus-jakarta text-gray-800 text-base font-semibold">
-                  Sign In with Google
+                  {t.auth.loginWithGoogle}
                 </span>
               </button>
 
@@ -177,7 +186,7 @@ const LoginPage = () => {
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
-                placeholder="Password"
+                placeholder={t.auth.passwordLabel}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-3.5 py-4 pr-12 bg-white border border-gray-300 rounded-lg shadow-[0_1px_2px_rgba(16,24,40,0.05)] text-gray-500 font-inter text-base placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/30"
@@ -265,27 +274,27 @@ const LoginPage = () => {
                   </div>
                 </div>
                 <span className="text-white font-plus-jakarta text-base sm:text-lg">
-                  Remember Me
+                  {t.auth.rememberMe}
                 </span>
               </label>
               <Link
                 href="/forgot-password"
                 className="text-white font-plus-jakarta text-base sm:text-lg hover:underline"
               >
-                Forgot Password?
+                {t.auth.forgotPassword}
               </Link>
             </div>
 
             {/* Sign Up Link */}
             <div className="text-center pt-2">
               <span className="text-white font-plus-jakarta text-base">
-                Don't have a account?{" "}
+                {t.auth.noAccount}{" "}
               </span>
               <Link
                 href="/signup"
                 className="text-white font-plus-jakarta text-base font-bold hover:underline transition-all"
               >
-                Sign Up
+                {t.auth.signUpLink}
               </Link>
             </div>
 
@@ -295,7 +304,7 @@ const LoginPage = () => {
               disabled={loading}
               className="w-full bg-transparent border-2 border-white rounded-lg py-4 text-white font-plus-jakarta text-lg font-semibold hover:bg-white/10 active:scale-[0.98] transition-all duration-200 mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Signing In..." : "Sign In"}
+              {loading ? t.common.loading : t.auth.login}
             </button>
           </form>
         </div>

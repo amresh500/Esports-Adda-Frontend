@@ -358,7 +358,7 @@ export default function OrganizationDashboardPage() {
                     required
                   >
                     {GAMES.map((game) => (
-                      <option key={game} value={game} className="bg-[#1a1a1a]">
+                      <option key={game} value={game} className="bg-white/10">
                         {game}
                       </option>
                     ))}

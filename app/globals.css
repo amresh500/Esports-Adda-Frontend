@@ -5,7 +5,12 @@
 
 :root {
   --primary-gradient: linear-gradient( #111111 0%, #441415 59%);
-  font-family: var(--font-plus-jakarta-sans), sans-serif;
+  font-family: var(--font-plus-jakarta-sans), var(--font-noto-devanagari), sans-serif;
+}
+
+/* Ensure Devanagari (Nepali) characters always render with the correct font */
+:lang(ne), [lang="ne"] {
+  font-family: var(--font-noto-devanagari), var(--font-plus-jakarta-sans), sans-serif;
 }
 
 @theme inline {
@@ -28,9 +33,9 @@
 
 body {
   background: var(--primary-gradient);
-  color: var(--foreground);
+  background-attachment: fixed;
+  color: #fff;
   font-family: var(--font-plus-jakarta-sans), sans-serif;
-  background-color: #fff;
-  color: #111;
   margin: 0; line-height: normal;
+  min-height: 100vh;
 }

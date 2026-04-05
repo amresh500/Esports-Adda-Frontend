@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import type { NextPage } from 'next';
-import axios from 'axios';
+import api from '@/lib/api';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Valorant from '@/components/icons/valorant';
@@ -11,8 +11,7 @@ import Dota2 from '@/components/icons/dota2';
 import PUBG from '@/components/icons/pubg';
 import LOL from '@/components/icons/lol';
 import FreeFire from '@/components/icons/freefire';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+import { useLanguage } from '@/lib/LanguageContext';
 
 const getGameIcon = (game: string) => {
   switch (game) {
@@ -33,6 +32,7 @@ const formatNumber = (num: number) => {
 };
 
 const EsportsData: NextPage = () => {
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalTeams: 0,
@@ -51,10 +51,10 @@ const EsportsData: NextPage = () => {
     const fetchData = async () => {
       try {
         const [statsRes, orgsRes, teamsRes, playersRes] = await Promise.all([
-          axios.get(`${API_URL}/api/stats/overview`),
-          axios.get(`${API_URL}/api/org-auth/all`),
-          axios.get(`${API_URL}/api/teams/`),
-          axios.get(`${API_URL}/api/teams/players`),
+          api.get('/stats/overview'),
+          api.get('/org-auth/all'),
+          api.get('/teams/'),
+          api.get('/teams/players'),
         ]);
 
         // Stats
@@ -120,7 +120,7 @@ const EsportsData: NextPage = () => {
       <div className="min-h-screen bg-primary-gradient text-white">
         <Header />
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-gray-400 text-xl">Loading esports data...</div>
+          <div className="text-gray-400 text-xl">{t.common.loading}</div>
         </div>
         <Footer />
       </div>
@@ -130,12 +130,12 @@ const EsportsData: NextPage = () => {
   return (
     <div className="min-h-screen bg-primary-gradient text-white">
       <Header />
-      <main className="w-full px-6 py-8 lg:px-22">
+      <main className="w-full px-4 sm:px-6 py-6 sm:py-8 lg:px-22">
         {/* Hero Section */}
         <div className="max-w-7xl mx-auto mb-6">
-          <h1 className="text-4xl font-bold mb-2">Esports Data</h1>
-          <p className="text-lg text-gray-300">
-            Comprehensive statistics and rankings for teams, players, and organizations
+          <h1 className="text-2xl sm:text-4xl font-bold mb-2">{t.esportsData.title}</h1>
+          <p className="text-sm sm:text-lg text-gray-300">
+            {t.esportsData.subtitle}
           </p>
         </div>
 
@@ -144,25 +144,25 @@ const EsportsData: NextPage = () => {
           <div className="bg-white/10 border border-white/20 rounded-xl p-5 backdrop-blur-sm">
             <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg mb-4"></div>
             <div className="text-2xl font-bold mb-1">{formatNumber(stats.totalTeams)}</div>
-            <div className="text-sm text-gray-300">Total Teams</div>
+            <div className="text-sm text-gray-300">{t.common.teams}</div>
           </div>
 
           <div className="bg-white/10 border border-white/20 rounded-xl p-5 backdrop-blur-sm">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg mb-4"></div>
             <div className="text-2xl font-bold mb-1">{formatNumber(stats.totalOrganizations)}</div>
-            <div className="text-sm text-gray-300">Organizations</div>
+            <div className="text-sm text-gray-300">{t.home.stats.organizations}</div>
           </div>
 
           <div className="bg-white/10 border border-white/20 rounded-xl p-5 backdrop-blur-sm">
             <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg mb-4"></div>
             <div className="text-2xl font-bold mb-1">{formatNumber(stats.totalPlayers)}</div>
-            <div className="text-sm text-gray-300">Active Players</div>
+            <div className="text-sm text-gray-300">{t.home.stats.activePlayers}</div>
           </div>
 
           <div className="bg-white/10 border border-white/20 rounded-xl p-5 backdrop-blur-sm">
             <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg mb-4"></div>
             <div className="text-2xl font-bold mb-1">{formatNumber(stats.totalMatches)}</div>
-            <div className="text-sm text-gray-300">Matches Played</div>
+            <div className="text-sm text-gray-300">{t.esportsData.recentResults}</div>
           </div>
 
           <div className="bg-white/10 border border-white/20 rounded-xl p-5 backdrop-blur-sm">
@@ -170,7 +170,7 @@ const EsportsData: NextPage = () => {
             <div className="text-2xl font-bold mb-1">
               {stats.currency} {formatNumber(stats.totalPrizePool)}
             </div>
-            <div className="text-sm text-gray-300">Total Prize Pool</div>
+            <div className="text-sm text-gray-300">{t.tournaments.totalPrizePool}</div>
           </div>
         </div>
 
@@ -178,7 +178,7 @@ const EsportsData: NextPage = () => {
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
           {/* Top Organizations */}
           <div className="flex flex-col gap-4">
-            <h2 className="text-2xl font-bold">Top Organizations</h2>
+            <h2 className="text-2xl font-bold">{t.esportsData.topTeams}</h2>
             <div className="bg-white/10 border border-white/20 rounded-xl p-5 backdrop-blur-sm">
               {topOrganizations.length > 0 ? (
                 topOrganizations.map((org) => (
@@ -204,9 +204,9 @@ const EsportsData: NextPage = () => {
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-8 text-sm">
+                    <div className="flex items-center gap-4 sm:gap-8 text-sm">
                       <div className="flex flex-col">
-                        <span className="text-gray-400 text-xs">Teams</span>
+                        <span className="text-gray-400 text-xs">{t.common.teams}</span>
                         <span>{org.teams}</span>
                       </div>
                       <div className="flex flex-col">
@@ -224,7 +224,7 @@ const EsportsData: NextPage = () => {
 
           {/* Top Teams */}
           <div className="flex flex-col gap-4">
-            <h2 className="text-2xl font-bold">Top Teams</h2>
+            <h2 className="text-2xl font-bold">{t.esportsData.topTeams}</h2>
             <div className="bg-white/10 border border-white/20 rounded-xl p-5 backdrop-blur-sm">
               {topTeams.length > 0 ? (
                 topTeams.map((team) => (
@@ -254,13 +254,13 @@ const EsportsData: NextPage = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-8 text-sm">
+                    <div className="flex items-center gap-4 sm:gap-8 text-sm">
                       <div className="flex flex-col">
-                        <span className="text-gray-400 text-xs">Tournaments</span>
+                        <span className="text-gray-400 text-xs">{t.esportsData.tournaments}</span>
                         <span>{team.tournamentsPlayed}</span>
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-gray-400 text-xs">Wins</span>
+                        <span className="text-gray-400 text-xs">{t.esportsData.wins}</span>
                         <span className="text-green-400">{team.wins}</span>
                       </div>
                     </div>
@@ -276,17 +276,17 @@ const EsportsData: NextPage = () => {
         {/* Top Individual Performers */}
         <div className="max-w-7xl mx-auto mb-12">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold">Top Players</h2>
+            <h2 className="text-2xl font-bold">{t.esportsData.topPlayers}</h2>
           </div>
 
-          <div className="bg-white/10 border border-white/20 rounded-xl overflow-hidden backdrop-blur-sm">
+          <div className="bg-white/10 border border-white/20 rounded-xl overflow-x-auto backdrop-blur-sm">
             {/* Table Header */}
-            <div className="grid grid-cols-6 gap-4 px-5 py-4 border-b border-white/10 text-sm text-gray-400">
-              <div className="col-span-2">Player</div>
-              <div>Team</div>
-              <div>Game</div>
-              <div>Role</div>
-              <div>In-Game Role</div>
+            <div className="grid grid-cols-6 gap-4 px-5 py-4 border-b border-white/10 text-sm text-gray-400 min-w-[600px]">
+              <div className="col-span-2">{t.esportsData.player}</div>
+              <div>{t.esportsData.team}</div>
+              <div>{t.tournament.game}</div>
+              <div>{t.common.details}</div>
+              <div>{t.common.details}</div>
             </div>
 
             {/* Table Body */}
@@ -294,7 +294,7 @@ const EsportsData: NextPage = () => {
               topPlayers.map((player) => (
                 <div
                   key={player.rank}
-                  className="grid grid-cols-6 gap-4 px-5 py-4 border-b border-white/10 last:border-b-0 items-center hover:bg-white/5 transition-colors"
+                  className="grid grid-cols-6 gap-4 px-5 py-4 border-b border-white/10 last:border-b-0 items-center hover:bg-white/5 transition-colors min-w-[600px]"
                 >
                   <div className="col-span-2 flex items-center gap-3">
                     <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center text-sm">

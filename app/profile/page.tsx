@@ -259,13 +259,13 @@ export default function PlayerProfilePage() {
       <Header />
       <div className="max-w-6xl mx-auto py-12 px-4">
         {/* Header */}
-        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 mb-8 border border-white/20">
-          <div className="flex items-start gap-6">
-            <div className="w-24 h-24 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-3xl font-bold">
+        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-8 mb-6 sm:mb-8 border border-white/20">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
+            <div className="w-16 h-16 sm:w-24 sm:h-24 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-2xl sm:text-3xl font-bold flex-shrink-0">
               {profile?.user?.username?.charAt(0).toUpperCase()}
             </div>
-            <div className="flex-1">
-              <h1 className="text-4xl font-bold text-white mb-2">
+            <div className="flex-1 text-center sm:text-left">
+              <h1 className="text-2xl sm:text-4xl font-bold text-white mb-2">
                 {profile?.user?.username}
               </h1>
               <p className="text-gray-300 mb-4">{profileForm.realName || "Set your real name"}</p>
@@ -294,24 +294,24 @@ export default function PlayerProfilePage() {
                 )}
               </div>
 
-              <div className="flex gap-4">
+              <div className="flex gap-4 justify-center sm:justify-start">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-white">
+                  <div className="text-xl sm:text-2xl font-bold text-white">
                     {profile?.stats?.tournamentsPlayed || 0}
                   </div>
-                  <div className="text-sm text-gray-400">Tournaments</div>
+                  <div className="text-xs sm:text-sm text-gray-400">Tournaments</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-white">
+                  <div className="text-xl sm:text-2xl font-bold text-white">
                     {profile?.stats?.wins || 0}
                   </div>
-                  <div className="text-sm text-gray-400">Wins</div>
+                  <div className="text-xs sm:text-sm text-gray-400">Wins</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-white">
+                  <div className="text-xl sm:text-2xl font-bold text-white">
                     {profile?.stats?.mvps || 0}
                   </div>
-                  <div className="text-sm text-gray-400">MVPs</div>
+                  <div className="text-xs sm:text-sm text-gray-400">MVPs</div>
                 </div>
               </div>
             </div>
@@ -320,7 +320,7 @@ export default function PlayerProfilePage() {
 
         {/* Admin Org Banner */}
         {adminOrg && (
-          <div className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 backdrop-blur-md rounded-2xl p-5 mb-8 border border-yellow-500/30 flex items-center justify-between">
+          <div className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 backdrop-blur-md rounded-2xl p-4 sm:p-5 mb-6 sm:mb-8 border border-yellow-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
               <p className="text-yellow-400 font-semibold text-sm mb-1">Organization Admin</p>
               <p className="text-white text-lg font-bold">
@@ -339,10 +339,10 @@ export default function PlayerProfilePage() {
         )}
 
         {/* Tabs */}
-        <div className="flex gap-4 mb-8">
+        <div className="flex gap-2 sm:gap-4 mb-6 sm:mb-8 overflow-x-auto pb-2">
           <button
             onClick={() => setActiveTab("profile")}
-            className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+            className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold transition-all text-sm sm:text-base flex-shrink-0 ${
               activeTab === "profile"
                 ? "bg-white text-black"
                 : "bg-white/10 text-white hover:bg-white/20"
@@ -352,7 +352,7 @@ export default function PlayerProfilePage() {
           </button>
           <button
             onClick={() => setActiveTab("games")}
-            className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+            className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold transition-all text-sm sm:text-base flex-shrink-0 ${
               activeTab === "games"
                 ? "bg-white text-black"
                 : "bg-white/10 text-white hover:bg-white/20"
@@ -362,7 +362,7 @@ export default function PlayerProfilePage() {
           </button>
           <button
             onClick={() => setActiveTab("achievements")}
-            className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+            className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold transition-all text-sm sm:text-base flex-shrink-0 ${
               activeTab === "achievements"
                 ? "bg-white text-black"
                 : "bg-white/10 text-white hover:bg-white/20"

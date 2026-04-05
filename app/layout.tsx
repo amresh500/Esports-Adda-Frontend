@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Plus_Jakarta_Sans, Noto_Sans_Devanagari } from "next/font/google";
+import { LanguageProvider } from "@/lib/LanguageContext";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -8,9 +9,23 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   display: "swap",
 });
 
+// Noto Sans Devanagari — renders Nepali (Devanagari script) correctly
+const notoSansDevanagari = Noto_Sans_Devanagari({
+  subsets: ["devanagari"],
+  variable: "--font-noto-devanagari",
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
+});
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export const metadata: Metadata = {
-  title: "Essports Adda",
-  description: "Your Ultimate Esports Hub",
+  title: "Esports Adda | इस्पोर्ट्स अड्डा",
+  description: "Nepal's Premier Esports Platform — नेपालको प्रमुख इस्पोर्ट्स प्लेटफर्म",
 };
 
 export default function RootLayout({
@@ -19,12 +34,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${plusJakartaSans.variable} antialiased`}
-      >
-        {/* <h1 className="text-3xl text-primary-100">Esports Adda</h1> */}
-        {children}
+    // lang is updated dynamically on the client by LanguageContext via document.documentElement.lang
+    <html lang="en" className={`${plusJakartaSans.variable} ${notoSansDevanagari.variable}`}>
+      <body className="antialiased">
+        <LanguageProvider>
+          {children}
+        </LanguageProvider>
       </body>
     </html>
   );

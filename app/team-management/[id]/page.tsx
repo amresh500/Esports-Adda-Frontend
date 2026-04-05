@@ -96,7 +96,7 @@ export default function TeamManagementPage() {
         }
       } else if (accountType === 'organization') {
         try {
-          const response = await axios.get(`${API_URL}/api/organization/my`, {
+          const response = await axios.get(`${API_URL}/api/org-auth/me`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           const orgId = response.data.data.organization._id;
@@ -199,7 +199,7 @@ export default function TeamManagementPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#1a0a0a]">
+      <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415]">
         <Header />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-white text-xl">Loading team details...</div>
@@ -211,7 +211,7 @@ export default function TeamManagementPage() {
 
   if (error && !team) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#1a0a0a]">
+      <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415]">
         <Header />
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
           <div className="text-red-400 text-xl">{error}</div>
@@ -229,7 +229,7 @@ export default function TeamManagementPage() {
 
   if (!isOwner && !isOrgOwner) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#1a0a0a]">
+      <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415]">
         <Header />
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
           <div className="text-red-400 text-xl">You don't have permission to manage this team</div>
@@ -246,7 +246,7 @@ export default function TeamManagementPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#1a0a0a]">
+    <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415]">
       <Header />
 
       <div className="container mx-auto px-4 py-8 max-w-7xl">

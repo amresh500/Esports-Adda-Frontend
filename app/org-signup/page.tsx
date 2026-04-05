@@ -1,15 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import axios from "axios";
+import api from "@/lib/api";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+import { useLanguage } from "@/lib/LanguageContext";
 
 export default function OrganizationSignup() {
+  const { t } = useLanguage();
   const router = useRouter();
   const [formData, setFormData] = useState({
     email: "",
@@ -64,7 +64,7 @@ export default function OrganizationSignup() {
     setLoading(true);
 
     try {
-      const response = await axios.post(`${API_URL}/api/org-auth/signup`, formData);
+      const response = await api.post('/org-auth/signup', formData);
 
       setSuccess(response.data.message || "Organization registered successfully! Please check your email to verify your account.");
 
@@ -97,10 +97,10 @@ export default function OrganizationSignup() {
       <div className="max-w-2xl mx-auto py-12 px-4">
         <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20">
           <h1 className="text-4xl font-bold text-white mb-2 text-center">
-            Register Your Organization
+            {t.auth.orgSignup}
           </h1>
           <p className="text-gray-300 text-center mb-8">
-            Create an organization account to manage teams and tournaments
+            {t.auth.signupSubtitle}
           </p>
 
           {error && (
@@ -118,7 +118,7 @@ export default function OrganizationSignup() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email */}
             <div>
-              <label className="block text-white mb-2">Email *</label>
+              <label className="block text-white mb-2">{t.auth.emailLabel} *</label>
               <input
                 type="email"
                 name="email"
@@ -132,7 +132,7 @@ export default function OrganizationSignup() {
 
             {/* Organization Name */}
             <div>
-              <label className="block text-white mb-2">Organization Name *</label>
+              <label className="block text-white mb-2">{t.auth.orgName} *</label>
               <input
                 type="text"
                 name="organizationName"
@@ -148,7 +148,7 @@ export default function OrganizationSignup() {
 
             {/* Tag */}
             <div>
-              <label className="block text-white mb-2">Organization Tag *</label>
+              <label className="block text-white mb-2">{t.auth.orgTag} *</label>
               <input
                 type="text"
                 name="tag"
@@ -167,7 +167,7 @@ export default function OrganizationSignup() {
 
             {/* Password */}
             <div>
-              <label className="block text-white mb-2">Password *</label>
+              <label className="block text-white mb-2">{t.auth.passwordLabel} *</label>
               <input
                 type="password"
                 name="password"
@@ -182,7 +182,7 @@ export default function OrganizationSignup() {
 
             {/* Confirm Password */}
             <div>
-              <label className="block text-white mb-2">Confirm Password *</label>
+              <label className="block text-white mb-2">{t.auth.confirmPasswordLabel} *</label>
               <input
                 type="password"
                 name="confirmPassword"
@@ -243,14 +243,14 @@ export default function OrganizationSignup() {
               disabled={loading}
               className="w-full bg-white/10 border border-white/30 text-white py-4 rounded-lg font-bold text-lg hover:bg-white/20 hover:border-white/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Registering..." : "Register Organization"}
+              {loading ? t.common.loading : t.auth.orgSignup}
             </button>
           </form>
 
           <p className="text-gray-300 text-center mt-6">
-            Already have an organization account?{" "}
+            {t.auth.hasAccount}{" "}
             <Link href="/org-login" className="text-white font-semibold hover:underline">
-              Login here
+              {t.auth.signInLink}
             </Link>
           </p>
 

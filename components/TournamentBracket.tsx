@@ -249,7 +249,7 @@ const TournamentBracket = ({
     return (
       <div
         key={match.id}
-        className="bg-white/5 border border-white/20 rounded-lg p-4 min-w-[280px]"
+        className="bg-white/5 border border-white/20 rounded-lg p-3 sm:p-4 min-w-[240px] sm:min-w-[280px]"
         style={{ marginBottom: '16px' }}
       >
         <div className="text-gray-400 text-xs mb-2">
@@ -356,7 +356,7 @@ const TournamentBracket = ({
   const renderBracketByRounds = () => {
     const rounds = Math.max(...matches.map((m) => m.round), 1);
     return (
-      <div className="flex gap-8 overflow-x-auto pb-4">
+      <div className="flex gap-4 sm:gap-8 overflow-x-auto pb-4 -mx-2 px-2">
         {Array.from({ length: rounds }, (_, i) => i + 1).map((round) => (
           <div key={round} className="flex flex-col">
             <h3 className="text-white font-semibold mb-4 text-center">

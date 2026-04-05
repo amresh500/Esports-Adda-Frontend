@@ -26,6 +26,7 @@ export default function OrganizerDashboard() {
     endTime: "",
     isNepal: true,
   });
+  const [tournaments, setTournaments] = useState<any[]>([]);
   const [formLoading, setFormLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -51,6 +52,7 @@ export default function OrganizerDashboard() {
   useEffect(() => {
     checkAuth();
     fetchMyStreams();
+    fetchMyTournaments();
   }, []);
 
   const checkAuth = async () => {
@@ -97,6 +99,18 @@ export default function OrganizerDashboard() {
       console.error("Failed to fetch streams:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchMyTournaments = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`${API_URL}/api/tournaments/my/tournaments`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setTournaments(response.data.data.tournaments || []);
+    } catch (error) {
+      console.error("Failed to fetch tournaments:", error);
     }
   };
 
@@ -229,19 +243,19 @@ export default function OrganizerDashboard() {
     <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415]">
       <Header />
 
-      <div className="px-20 py-8">
-        <div className="flex items-center justify-between mb-8">
+      <div className="px-4 sm:px-8 lg:px-20 py-6 sm:py-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
           <div>
-            <h1 className="font-plus-jakarta text-4xl text-white mb-2">
+            <h1 className="font-plus-jakarta text-2xl sm:text-4xl text-white mb-2">
               Organizer Dashboard
             </h1>
-            <p className="font-plus-jakarta text-lg text-white/70">
+            <p className="font-plus-jakarta text-sm sm:text-lg text-white/70">
               Welcome back, {user?.username}! Manage your tournament streams
             </p>
           </div>
           <button
             onClick={() => setShowAddForm(!showAddForm)}
-            className="px-6 py-3 bg-[#e85d5d] hover:bg-[#d64d4d] rounded-lg text-white font-arial text-base transition-all"
+            className="px-4 sm:px-6 py-2.5 sm:py-3 bg-[#e85d5d] hover:bg-[#d64d4d] rounded-lg text-white font-arial text-sm sm:text-base transition-all self-start sm:self-auto"
           >
             {showAddForm ? "Cancel" : "+ Add New Stream"}
           </button>
@@ -318,17 +332,27 @@ export default function OrganizerDashboard() {
 
                 <div>
                   <label className="block text-white/70 text-sm font-arial mb-2">
-                    Tournament Name *
+                    Tournament *
                   </label>
-                  <input
-                    type="text"
+                  <select
                     name="tournament"
                     value={formData.tournament}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 text-white font-arial placeholder-gray-400 focus:outline-none focus:border-white/40"
-                    placeholder="e.g., Nepal Championship 2024"
-                  />
+                    className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 text-white font-arial focus:outline-none focus:border-white/40 [&>option]:bg-gray-900 [&>option]:text-white"
+                  >
+                    <option value="">Select a tournament</option>
+                    {tournaments.map((t: any) => (
+                      <option key={t._id} value={t._id}>
+                        {t.name} ({t.game})
+                      </option>
+                    ))}
+                  </select>
+                  {tournaments.length === 0 && (
+                    <p className="text-yellow-400/70 text-xs mt-1">
+                      No tournaments found. Create a tournament first.
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -460,7 +484,7 @@ export default function OrganizerDashboard() {
                     </div>
                     <div>
                       <p className="text-white/50 mb-1">Tournament</p>
-                      <p className="text-white">{stream.tournament}</p>
+                      <p className="text-white">{stream.tournamentName || stream.tournament?.name || "N/A"}</p>
                     </div>
                     <div>
                       <p className="text-white/50 mb-1">Start Time</p>

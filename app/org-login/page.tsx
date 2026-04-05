@@ -1,15 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import axios from "axios";
+import api from "@/lib/api";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+import { useLanguage } from "@/lib/LanguageContext";
 
 export default function OrganizationLogin() {
+  const { t } = useLanguage();
   const router = useRouter();
   const [formData, setFormData] = useState({
     email: "",
@@ -33,7 +33,7 @@ export default function OrganizationLogin() {
     setLoading(true);
 
     try {
-      const response = await axios.post(`${API_URL}/api/org-auth/login`, formData);
+      const response = await api.post('/org-auth/login', formData);
 
       // Store token and account type
       localStorage.setItem("token", response.data.data.token);
@@ -55,10 +55,10 @@ export default function OrganizationLogin() {
       <div className="max-w-md mx-auto py-12 px-4">
         <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20">
           <h1 className="text-4xl font-bold text-white mb-2 text-center">
-            Organization Login
+            {t.auth.orgLogin}
           </h1>
           <p className="text-gray-300 text-center mb-8">
-            Login to your organization account
+            {t.auth.loginSubtitle}
           </p>
 
           {error && (
@@ -70,7 +70,7 @@ export default function OrganizationLogin() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email */}
             <div>
-              <label className="block text-white mb-2">Email</label>
+              <label className="block text-white mb-2">{t.auth.emailLabel}</label>
               <input
                 type="email"
                 name="email"
@@ -84,7 +84,7 @@ export default function OrganizationLogin() {
 
             {/* Password */}
             <div>
-              <label className="block text-white mb-2">Password</label>
+              <label className="block text-white mb-2">{t.auth.passwordLabel}</label>
               <input
                 type="password"
                 name="password"
@@ -117,14 +117,14 @@ export default function OrganizationLogin() {
               disabled={loading}
               className="w-full bg-white/10 border border-white/30 text-white py-4 rounded-lg font-bold text-lg hover:bg-white/20 hover:border-white/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Logging in..." : "Login"}
+              {loading ? t.common.loading : t.auth.login}
             </button>
           </form>
 
           <p className="text-gray-300 text-center mt-6">
-            Don't have an organization account?{" "}
+            {t.auth.noAccount}{" "}
             <Link href="/org-signup" className="text-white font-semibold hover:underline">
-              Register here
+              {t.auth.signUpLink}
             </Link>
           </p>
 

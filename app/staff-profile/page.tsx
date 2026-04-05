@@ -360,7 +360,7 @@ export default function StaffProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#1a0a0a]">
+      <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415]">
         <Header />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-white text-xl">Loading profile...</div>
@@ -371,7 +371,7 @@ export default function StaffProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#1a0a0a]">
+    <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415]">
       <Header />
 
       <div className="container mx-auto px-4 py-8 max-w-7xl">

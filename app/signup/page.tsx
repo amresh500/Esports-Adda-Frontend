@@ -15,11 +15,9 @@ import RainbowSixSiege from "@/components/icons/rainbbowsixsiege";
 
 import { useState } from "react";
 import Link from "next/link";
-import { authAPI } from "@/lib/api";
+import api, { authAPI } from "@/lib/api";
 import { useRouter } from "next/navigation";
-import axios from "axios";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+import { useLanguage } from "@/lib/LanguageContext";
 
 const GAMES = [
   "Valorant",
@@ -77,6 +75,7 @@ const RANK_OPTIONS: { [key: string]: string[] } = {
 };
 
 const SignUpPage = () => {
+  const { t } = useLanguage();
   const router = useRouter();
   const [step, setStep] = useState(0); // Start with step 0 for account type selection
 
@@ -265,7 +264,7 @@ const SignUpPage = () => {
         setSuccess("Player account created successfully! Please verify your email to login.");
       } else {
         // Create organization account
-        const response = await axios.post(`${API_URL}/api/org-auth/signup`, {
+        const response = await api.post('/org-auth/signup', {
           email,
           password,
           confirmPassword,
@@ -402,13 +401,13 @@ const SignUpPage = () => {
 
               <div className="text-center pt-2">
                 <span className="text-white font-plus-jakarta text-base">
-                  Already have an account?{" "}
+                  {t.auth.hasAccount}{" "}
                 </span>
                 <Link
                   href="/login"
                   className="text-white font-plus-jakarta text-base font-bold hover:underline transition-all"
                 >
-                  Log In
+                  {t.auth.signInLink}
                 </Link>
               </div>
 
@@ -435,7 +434,7 @@ const SignUpPage = () => {
                   >
                     <Google height={24} width={24}/>
                     <span className="font-plus-jakarta text-gray-800 text-base font-semibold">
-                      Sign Up with Google
+                      {t.auth.loginWithGoogle.replace("Sign In", "Sign Up")}
                     </span>
                   </button>
 
@@ -450,7 +449,7 @@ const SignUpPage = () => {
 
               <input
                 type="email"
-                placeholder="Email"
+                placeholder={t.auth.emailLabel}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-3.5 py-4 bg-white border border-gray-300 rounded-lg shadow-[0_1px_2px_rgba(16,24,40,0.05)] text-gray-500 font-inter text-base placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/30"
@@ -459,7 +458,7 @@ const SignUpPage = () => {
               {accountType === "player" ? (
                 <input
                   type="text"
-                  placeholder="Username"
+                  placeholder={t.auth.usernameLabel}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="w-full px-3.5 py-4 bg-white border border-gray-300 rounded-lg shadow-[0_1px_2px_rgba(16,24,40,0.05)] text-gray-500 font-inter text-base placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/30"
@@ -468,7 +467,7 @@ const SignUpPage = () => {
                 <>
                   <input
                     type="text"
-                    placeholder="Organization Name"
+                    placeholder={t.auth.orgName}
                     value={organizationName}
                     onChange={(e) => setOrganizationName(e.target.value)}
                     className="w-full px-3.5 py-4 bg-white border border-gray-300 rounded-lg shadow-[0_1px_2px_rgba(16,24,40,0.05)] text-gray-500 font-inter text-base placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/30"
@@ -797,7 +796,7 @@ const SignUpPage = () => {
                   disabled={loading || selectedGames.length === 0}
                   className="flex-1 bg-transparent border-2 border-white rounded-lg py-4 text-white font-plus-jakarta text-lg font-semibold hover:bg-white/10 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? "Creating Account..." : "Complete Sign Up"}
+                  {loading ? t.common.loading : t.auth.signup}
                 </button>
               </div>
             </div>

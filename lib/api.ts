@@ -59,10 +59,12 @@ export const authAPI = {
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('accountType');
+    localStorage.removeItem('userId');
     localStorage.removeItem('organizationData');
     localStorage.removeItem('isOrgAdmin');
     localStorage.removeItem('adminOrgId');
     localStorage.removeItem('adminOrgName');
+    localStorage.removeItem('isAdmin');
   },
 
   verifyEmail: async (token: string) => {

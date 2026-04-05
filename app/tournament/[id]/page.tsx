@@ -6,10 +6,12 @@ import axios from 'axios';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import TournamentBracket from '@/components/TournamentBracket';
+import { useLanguage } from '@/lib/LanguageContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export default function TournamentDetailsPage() {
+  const { t } = useLanguage();
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -112,7 +114,7 @@ export default function TournamentDetailsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#1a0a0a]">
+      <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415]">
         <Header />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-white text-xl">Loading tournament details...</div>
@@ -124,7 +126,7 @@ export default function TournamentDetailsPage() {
 
   if (error || !tournament) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#1a0a0a]">
+      <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415]">
         <Header />
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
           <div className="text-red-400 text-xl">{error || 'Tournament not found'}</div>
@@ -141,7 +143,7 @@ export default function TournamentDetailsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#1a0a0a]">
+    <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415]">
       <Header />
 
       <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -178,10 +180,12 @@ export default function TournamentDetailsPage() {
                       ? 'bg-yellow-500/20 text-yellow-300'
                       : tournament.status === 'completed'
                       ? 'bg-blue-500/20 text-blue-300'
+                      : tournament.status === 'overdue'
+                      ? 'bg-orange-500/20 text-orange-300'
                       : 'bg-red-500/20 text-red-300'
                   }`}
                 >
-                  {tournament.status.replace('_', ' ').toUpperCase()}
+                  {tournament.status.replaceAll('_', ' ').toUpperCase()}
                 </span>
               </div>
             </div>
@@ -212,7 +216,7 @@ export default function TournamentDetailsPage() {
               <div className="flex items-center gap-4">
                 <div className="text-5xl">🏆</div>
                 <div>
-                  <p className="text-yellow-400 text-sm font-semibold uppercase tracking-wider">Tournament Champion</p>
+                  <p className="text-yellow-400 text-sm font-semibold uppercase tracking-wider">{t.tournament.champion}</p>
                   <p className="text-white text-3xl font-bold">{tournament.winner.teamName}</p>
                 </div>
               </div>
@@ -220,7 +224,7 @@ export default function TournamentDetailsPage() {
                 <div className="flex items-center gap-3">
                   <div className="text-3xl">🥈</div>
                   <div>
-                    <p className="text-gray-400 text-sm font-semibold uppercase tracking-wider">Runner-up</p>
+                    <p className="text-gray-400 text-sm font-semibold uppercase tracking-wider">{t.tournament.runnerUp}</p>
                     <p className="text-white text-xl font-bold">{tournament.runnerUp.teamName}</p>
                   </div>
                 </div>
@@ -257,21 +261,21 @@ export default function TournamentDetailsPage() {
             </div>
           </div>
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
-            <p className="text-gray-400 text-sm mb-1">Teams Registered</p>
+            <p className="text-gray-400 text-sm mb-1">{t.tournaments.registered}</p>
             <p className="text-white text-2xl font-bold">
               {tournament.participants?.length || 0} / {tournament.totalSlots}
             </p>
           </div>
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
-            <p className="text-gray-400 text-sm mb-1">Prize Pool</p>
+            <p className="text-gray-400 text-sm mb-1">{t.tournament.prizePool}</p>
             <p className="text-white text-2xl font-bold">NPR {tournament.prizePool?.amount?.toLocaleString() || 0}</p>
           </div>
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
-            <p className="text-gray-400 text-sm mb-1">Team Size</p>
+            <p className="text-gray-400 text-sm mb-1">{t.tournament.teamSize}</p>
             <p className="text-white text-2xl font-bold">{tournament.teamSize} Players</p>
           </div>
           <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
-            <p className="text-gray-400 text-sm mb-1">Start Date</p>
+            <p className="text-gray-400 text-sm mb-1">{t.common.date}</p>
             <p className="text-white text-xl font-bold">
               {new Date(tournament.tournamentStartDate).toLocaleDateString()}
             </p>
@@ -291,18 +295,18 @@ export default function TournamentDetailsPage() {
           <h2 className="text-2xl font-bold text-white mb-6">Tournament Details</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <p className="text-gray-400 text-sm mb-1">Organized By</p>
+              <p className="text-gray-400 text-sm mb-1">{t.tournament.organizer}</p>
               <p className="text-white font-semibold">{tournament.organizerName || 'Unknown'}</p>
             </div>
             <div>
-              <p className="text-gray-400 text-sm mb-1">Registration Period</p>
+              <p className="text-gray-400 text-sm mb-1">{t.tournament.registrationPeriod}</p>
               <p className="text-white font-semibold">
                 {new Date(tournament.registrationStartDate).toLocaleDateString()} -{' '}
                 {new Date(tournament.registrationEndDate).toLocaleDateString()}
               </p>
             </div>
             <div>
-              <p className="text-gray-400 text-sm mb-1">Tournament Duration</p>
+              <p className="text-gray-400 text-sm mb-1">{t.tournament.tournamentDates}</p>
               <p className="text-white font-semibold">
                 {new Date(tournament.tournamentStartDate).toLocaleDateString()} -{' '}
                 {new Date(tournament.tournamentEndDate).toLocaleDateString()}
@@ -310,27 +314,27 @@ export default function TournamentDetailsPage() {
             </div>
             {tournament.streamUrl && (
               <div>
-                <p className="text-gray-400 text-sm mb-1">Stream</p>
+                <p className="text-gray-400 text-sm mb-1">{t.tournament.liveStream}</p>
                 <a
                   href={tournament.streamUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-purple-400 hover:text-purple-300 font-semibold"
                 >
-                  Watch Live →
+                  {t.tournament.watchLive} →
                 </a>
               </div>
             )}
             {tournament.discordUrl && (
               <div>
-                <p className="text-gray-400 text-sm mb-1">Discord</p>
+                <p className="text-gray-400 text-sm mb-1">{t.tournament.discordServer}</p>
                 <a
                   href={tournament.discordUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-400 hover:text-blue-300 font-semibold"
                 >
-                  Join Server →
+                  {t.tournament.joinDiscord} →
                 </a>
               </div>
             )}
@@ -351,7 +355,7 @@ export default function TournamentDetailsPage() {
                 onClick={() => router.push(`/tournament/${tournamentId}/bracket`)}
                 className="px-4 py-2 bg-blue-500/20 border border-blue-500 text-blue-300 rounded-lg hover:bg-blue-500/30 transition-all text-sm"
               >
-                View Public Bracket
+                {t.tournaments.viewBracket}
               </button>
             )}
           </div>
