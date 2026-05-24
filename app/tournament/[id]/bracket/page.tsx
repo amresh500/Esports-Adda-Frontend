@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import api from '@/lib/api';
 import Header from '@/components/Header';
@@ -8,7 +8,7 @@ import Footer from '@/components/Footer';
 import TournamentBracket from '@/components/TournamentBracket';
 
 
-export default function PublicBracketPage() {
+function PublicBracketPageInner() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -658,5 +658,13 @@ export default function PublicBracketPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function PublicBracketPage() {
+  return (
+    <Suspense fallback={<div style={{minHeight: '60vh'}} />}>
+      <PublicBracketPageInner />
+    </Suspense>
   );
 }

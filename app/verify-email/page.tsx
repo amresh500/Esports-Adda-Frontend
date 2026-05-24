@@ -1,12 +1,12 @@
 'use client';
 
 import Logo from "@/components/icons/logo";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
 
-const VerifyEmailPage = () => {
+const VerifyEmailPageInner = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -134,4 +134,10 @@ const VerifyEmailPage = () => {
     </div>
   );
 };
-export default VerifyEmailPage;
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '60vh' }} />}>
+      <VerifyEmailPageInner />
+    </Suspense>
+  );
+}

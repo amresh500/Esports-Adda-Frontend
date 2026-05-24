@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import axios from "axios";
 import Header from "@/components/Header";
@@ -8,7 +8,7 @@ import Footer from "@/components/Footer";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-export default function VerifyOrganization() {
+function VerifyOrganizationInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
@@ -89,5 +89,13 @@ export default function VerifyOrganization() {
       </div>
       <Footer />
     </div>
+  );
+}
+
+export default function VerifyOrganization() {
+  return (
+    <Suspense fallback={<div style={{minHeight: '60vh'}} />}>
+      <VerifyOrganizationInner />
+    </Suspense>
   );
 }

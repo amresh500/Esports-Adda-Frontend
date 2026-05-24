@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from "react";
 import { createPortal } from 'react-dom';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import api from '@/lib/api';
@@ -257,7 +257,7 @@ function RegistrationApprovals({ tournament, tournamentId, onRefresh }: {
 /* ══════════════════════════════════════════════════════════════
    MAIN PAGE
 ══════════════════════════════════════════════════════════════ */
-export default function TournamentManagePage() {
+function TournamentManagePageInner() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -1010,5 +1010,13 @@ export default function TournamentManagePage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function TournamentManagePage() {
+  return (
+    <Suspense fallback={<div style={{minHeight: '60vh'}} />}>
+      <TournamentManagePageInner />
+    </Suspense>
   );
 }

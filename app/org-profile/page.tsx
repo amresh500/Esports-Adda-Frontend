@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import api from '@/lib/api';
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
@@ -62,7 +62,7 @@ function StatusBadge({ status }: { status: string }) {
 /* ══════════════════════════════════════════════════════════════
    PAGE
 ══════════════════════════════════════════════════════════════ */
-export default function OrganizationProfile() {
+function OrganizationProfileInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toasts, removeToast, showSuccess, showError } = useToast();
@@ -1038,5 +1038,13 @@ export default function OrganizationProfile() {
       <ToastContainer toasts={toasts} removeToast={removeToast} />
       <Footer />
     </div>
+  );
+}
+
+export default function OrganizationProfile() {
+  return (
+    <Suspense fallback={<div style={{minHeight: '60vh'}} />}>
+      <OrganizationProfileInner />
+    </Suspense>
   );
 }

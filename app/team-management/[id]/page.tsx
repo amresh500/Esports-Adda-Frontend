@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import api from '@/lib/api';
 import Header from '@/components/Header';
@@ -8,7 +8,7 @@ import Footer from '@/components/Footer';
 import ConfirmDialog from '@/components/ConfirmDialog';
 
 
-export default function TeamManagementPage() {
+function TeamManagementPageInner() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -453,5 +453,13 @@ export default function TeamManagementPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function TeamManagementPage() {
+  return (
+    <Suspense fallback={<div style={{minHeight: '60vh'}} />}>
+      <TeamManagementPageInner />
+    </Suspense>
   );
 }

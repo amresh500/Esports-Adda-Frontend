@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import api from '@/lib/api';
 import Header from '@/components/Header';
@@ -122,7 +122,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; dot: string 
   overdue:              { label: 'Overdue',              color: 'text-orange-400', dot: 'bg-orange-400' },
 };
 
-export default function TournamentDetailsPage() {
+function TournamentDetailsPageInner() {
   const { t } = useLanguage();
   const params = useParams();
   const router = useRouter();
@@ -651,5 +651,13 @@ function DetailRow({ label, value }: { label: string; value: string; accent?: st
       <p className="text-white/30 text-[10px] uppercase tracking-widest mb-1">{label}</p>
       <p className="text-white/80 text-sm font-semibold">{value}</p>
     </div>
+  );
+}
+
+export default function TournamentDetailsPage() {
+  return (
+    <Suspense fallback={<div style={{minHeight: '60vh'}} />}>
+      <TournamentDetailsPageInner />
+    </Suspense>
   );
 }
