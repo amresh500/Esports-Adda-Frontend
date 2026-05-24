@@ -39,7 +39,7 @@ export default function CommunityHubPage() {
   useEffect(() => {
     setUserId(localStorage.getItem("userId"));
     setAccountType(localStorage.getItem("accountType"));
-    setIsLoggedIn(!!localStorage.getItem("token"));
+    setIsLoggedIn(!!localStorage.getItem("accountType"));
   }, []);
 
   const {
@@ -141,7 +141,7 @@ export default function CommunityHubPage() {
 
   if (!game) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415] flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(180deg, #111111 0%, #110a0a 100%)' }}>
         <div className="text-white text-center">
           <p className="text-xl mb-4">Game not found</p>
           <button onClick={() => router.push("/games")} className="px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all">
@@ -155,7 +155,7 @@ export default function CommunityHubPage() {
   const gameColor = GAME_COLORS[game] || "from-[#6C5CE7] to-[#5B4CDB]";
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415] flex flex-col">
+    <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(180deg, #111111 0%, #110a0a 100%)' }}>
       <Header />
 
       {/* ── Top bar ─────────────────────────────────────────────────────── */}
@@ -171,14 +171,14 @@ export default function CommunityHubPage() {
         </div>
 
         <div>
-          <h1 className="font-arial text-lg sm:text-2xl text-white font-bold">{game} Community Hub</h1>
-          <p className="font-arial text-sm text-gray-400">Real-time chat &amp; announcements</p>
+          <h1 className="font-['Russo_One'] text-lg sm:text-2xl text-white">{game} Community Hub</h1>
+          <p className="font-body text-sm text-gray-400">Real-time chat &amp; announcements</p>
         </div>
 
         <div className="ml-auto flex items-center gap-3">
           {/* Pinned indicator */}
           {pinnedMessages.length > 0 && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-sm font-arial">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-sm font-body">
               <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
               </svg>
@@ -188,7 +188,7 @@ export default function CommunityHubPage() {
           {/* Online count */}
           <div className="flex items-center gap-2">
             <span className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-400" : "bg-gray-500"}`} />
-            <span className="font-arial text-sm text-gray-300">{onlineCount} online</span>
+            <span className="font-body text-sm text-gray-300">{onlineCount} online</span>
           </div>
         </div>
       </div>
@@ -207,7 +207,7 @@ export default function CommunityHubPage() {
             <svg className="w-4 h-4 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
             </svg>
-            <span className="font-arial text-sm font-bold text-yellow-400 uppercase tracking-wider">Announcements</span>
+            <span className="font-body text-sm font-bold text-yellow-400 uppercase tracking-wider">Announcements</span>
             {announcements.length > 0 && (
               <span className="ml-auto bg-yellow-500/20 text-yellow-400 text-xs font-bold px-2 py-0.5 rounded-full border border-yellow-500/30">
                 {announcements.length}
@@ -218,7 +218,7 @@ export default function CommunityHubPage() {
           {/* Pinned messages sub-section */}
           {pinnedMessages.length > 0 && (
             <div className="px-3 py-2 border-b border-white/5 bg-white/3">
-              <p className="font-arial text-[10px] text-gray-500 uppercase tracking-widest mb-1.5">Pinned</p>
+              <p className="font-body text-[10px] text-gray-500 uppercase tracking-widest mb-1.5">Pinned</p>
               <div className="flex flex-col gap-2">
                 {pinnedMessages.map((msg) => (
                   <div key={msg._id} className="flex items-start gap-2">
@@ -226,8 +226,8 @@ export default function CommunityHubPage() {
                       <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                     </svg>
                     <div className="min-w-0">
-                      <p className="font-arial text-xs text-yellow-400 font-semibold truncate">{msg.senderName}</p>
-                      <p className="font-arial text-xs text-gray-400 line-clamp-2">{msg.content}</p>
+                      <p className="font-body text-xs text-yellow-400 font-semibold truncate">{msg.senderName}</p>
+                      <p className="font-body text-xs text-gray-400 line-clamp-2">{msg.content}</p>
                     </div>
                   </div>
                 ))}
@@ -239,7 +239,7 @@ export default function CommunityHubPage() {
           <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-3">
             {isLoading && announcements.length === 0 && (
               <div className="flex items-center justify-center py-10">
-                <p className="font-arial text-xs text-gray-500">Loading...</p>
+                <p className="font-body text-xs text-gray-500">Loading...</p>
               </div>
             )}
 
@@ -250,9 +250,9 @@ export default function CommunityHubPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
                   </svg>
                 </div>
-                <p className="font-arial text-xs text-gray-500">No announcements yet.</p>
+                <p className="font-body text-xs text-gray-500">No announcements yet.</p>
                 {accountType === "organization" && (
-                  <p className="font-arial text-xs text-gray-600">Post an announcement from the chat box.</p>
+                  <p className="font-body text-xs text-gray-600">Post an announcement from the chat box.</p>
                 )}
               </div>
             )}
@@ -273,7 +273,7 @@ export default function CommunityHubPage() {
           {/* Org-only: announcement send shortcut */}
           {accountType === "organization" && (
             <div className="border-t border-yellow-500/10 px-3 py-2">
-              <p className="font-arial text-[10px] text-gray-600 text-center">
+              <p className="font-body text-[10px] text-gray-600 text-center">
                 Toggle "Post as announcement" in the chat input to post here.
               </p>
             </div>
@@ -287,9 +287,9 @@ export default function CommunityHubPage() {
             <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
-            <span className="font-arial text-sm font-bold text-gray-300 uppercase tracking-wider">Live Chat</span>
+            <span className="font-body text-sm font-bold text-gray-300 uppercase tracking-wider">Live Chat</span>
             {chatMessages.length > 0 && (
-              <span className="ml-1 font-arial text-xs text-gray-500">{chatMessages.length} messages</span>
+              <span className="ml-1 font-body text-xs text-gray-500">{chatMessages.length} messages</span>
             )}
           </div>
 
@@ -305,7 +305,7 @@ export default function CommunityHubPage() {
                 <button
                   onClick={loadMore}
                   disabled={isLoading}
-                  className="px-4 py-1.5 bg-white/10 hover:bg-white/15 border border-white/20 rounded-lg text-xs font-arial text-gray-300 transition-all disabled:opacity-50"
+                  className="px-4 py-1.5 bg-white/10 hover:bg-white/15 border border-white/20 rounded-lg text-xs font-body text-gray-300 transition-all disabled:opacity-50"
                 >
                   {isLoading ? "Loading..." : "Load older messages"}
                 </button>
@@ -314,7 +314,7 @@ export default function CommunityHubPage() {
 
             {isLoading && chatMessages.length === 0 && (
               <div className="flex items-center justify-center py-20">
-                <p className="font-arial text-sm text-gray-400">Loading messages...</p>
+                <p className="font-body text-sm text-gray-400">Loading messages...</p>
               </div>
             )}
 
@@ -323,7 +323,7 @@ export default function CommunityHubPage() {
                 <div className={`w-16 h-16 bg-gradient-to-br ${gameColor} rounded-2xl flex items-center justify-center text-2xl`}>
                   💬
                 </div>
-                <p className="font-arial text-gray-400 text-center text-sm">
+                <p className="font-body text-gray-400 text-center text-sm">
                   No messages yet. Be the first to say something!
                 </p>
               </div>
@@ -347,7 +347,7 @@ export default function CommunityHubPage() {
           {/* Typing indicator */}
           {typingUsers.length > 0 && (
             <div className="px-4 py-1.5 border-t border-white/5">
-              <p className="font-arial text-xs text-gray-500 italic">
+              <p className="font-body text-xs text-gray-500 italic">
                 {typingUsers.length === 1
                   ? `${typingUsers[0].name} is typing...`
                   : typingUsers.length === 2
@@ -364,7 +364,7 @@ export default function CommunityHubPage() {
               <div className="flex items-center gap-2 mb-3">
                 <button
                   onClick={() => setIsAnnouncement(!isAnnouncement)}
-                  className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-arial border transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-body border transition-all ${
                     isAnnouncement
                       ? "bg-yellow-500/20 border-yellow-500/40 text-yellow-400"
                       : "bg-white/5 border-white/10 text-gray-400 hover:text-white"
@@ -379,7 +379,7 @@ export default function CommunityHubPage() {
             )}
 
             {sendError && (
-              <p className="font-arial text-xs text-red-400 mb-2">{sendError}</p>
+              <p className="font-body text-xs text-red-400 mb-2">{sendError}</p>
             )}
 
             {isLoggedIn ? (
@@ -394,7 +394,7 @@ export default function CommunityHubPage() {
                       : `Message #${game.toLowerCase().replace(/ /g, "-")}...`
                   }
                   rows={1}
-                  className={`flex-1 bg-white/10 border rounded-xl px-4 py-3 font-arial text-sm text-white placeholder-gray-500 focus:outline-none resize-none transition-all ${
+                  className={`flex-1 bg-white/10 border rounded-xl px-4 py-3 font-body text-sm text-white placeholder-gray-500 focus:outline-none resize-none transition-all ${
                     isAnnouncement
                       ? "border-yellow-500/40 focus:border-yellow-500/70"
                       : "border-white/20 focus:border-white/40"
@@ -409,7 +409,7 @@ export default function CommunityHubPage() {
                 <button
                   onClick={handleSend}
                   disabled={!inputValue.trim() || isSending || !isConnected}
-                  className={`px-5 py-3 rounded-xl font-arial text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                  className={`px-5 py-3 rounded-xl font-body text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
                     isAnnouncement
                       ? "bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-black"
                       : "bg-gradient-to-r from-[#FF4655] to-[#D13639] hover:from-[#FF5566] hover:to-[#E14748] text-white"
@@ -420,12 +420,12 @@ export default function CommunityHubPage() {
               </div>
             ) : (
               <div className="flex items-center justify-center gap-3 py-2">
-                <p className="font-arial text-sm text-gray-400">
+                <p className="font-body text-sm text-gray-400">
                   You must be logged in to send messages.
                 </p>
                 <button
                   onClick={() => router.push("/login")}
-                  className="px-4 py-2 bg-gradient-to-r from-[#FF4655] to-[#D13639] text-white rounded-lg text-sm font-arial hover:from-[#FF5566] hover:to-[#E14748] transition-all"
+                  className="px-4 py-2 bg-gradient-to-r from-[#FF4655] to-[#D13639] text-white rounded-lg text-sm font-body hover:from-[#FF5566] hover:to-[#E14748] transition-all"
                 >
                   Log in
                 </button>

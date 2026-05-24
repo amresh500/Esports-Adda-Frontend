@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import axios from 'axios';
+import api from '@/lib/api';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ConfirmDialog from '@/components/ConfirmDialog';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export default function TeamManagementPage() {
   const params = useParams();
@@ -57,7 +56,7 @@ export default function TeamManagementPage() {
 
   const fetchTeamDetails = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/teams/${teamId}`);
+      const response = await api.get(`/teams/${teamId}`);
       setTeam(response.data.data.team);
       setLoading(false);
     } catch (error: any) {
@@ -69,10 +68,9 @@ export default function TeamManagementPage() {
 
   const checkPermissions = async () => {
     try {
-      const token = localStorage.getItem('token');
       const accountType = localStorage.getItem('accountType');
 
-      if (!token || !team) {
+      if (!accountType || !team) {
         setIsOwner(false);
         setIsOrgOwner(false);
         return;
@@ -83,9 +81,7 @@ export default function TeamManagementPage() {
 
       if (accountType === 'player') {
         try {
-          const response = await axios.get(`${API_URL}/api/profile/my`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
+          const response = await api.get(`/profile/my`);
           const userId = response.data.data.profile.user;
           const teamOwnerId = typeof team.owner === 'string' ? team.owner : team.owner?._id;
           console.log('Player userId:', userId, 'Team owner:', teamOwnerId);
@@ -96,9 +92,7 @@ export default function TeamManagementPage() {
         }
       } else if (accountType === 'organization') {
         try {
-          const response = await axios.get(`${API_URL}/api/org-auth/me`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
+          const response = await api.get(`/org-auth/me`);
           const orgId = response.data.data.organization._id;
           const teamOrgId = typeof team.organization === 'string' ? team.organization : team.organization?._id;
           console.log('Org ID:', orgId, 'Team organization:', teamOrgId);
@@ -134,15 +128,13 @@ export default function TeamManagementPage() {
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
       const memberData = {
         ...addMemberForm,
         game: team.game,
       };
-      await axios.post(
-        `${API_URL}/api/teams/${teamId}/members`,
-        memberData,
-        { headers: { Authorization: `Bearer ${token}` } }
+      await api.post(
+        `/teams/${teamId}/members`,
+        memberData
       );
       setSuccess('Member added successfully!');
       setShowAddMemberModal(false);
@@ -168,10 +160,7 @@ export default function TeamManagementPage() {
     if (!memberToRemove) return;
 
     try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${API_URL}/api/teams/${teamId}/members/${memberToRemove.gameIndex}/${memberToRemove.memberIndex}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.delete(`/teams/${teamId}/members/${memberToRemove.gameIndex}/${memberToRemove.memberIndex}`);
       setSuccess('Member removed successfully!');
       setShowRemoveMemberModal(false);
       setMemberToRemove(null);
@@ -185,10 +174,7 @@ export default function TeamManagementPage() {
 
   const handleDeleteTeam = async () => {
     try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${API_URL}/api/teams/${teamId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.delete(`/teams/${teamId}`);
       setShowDeleteTeamModal(false);
       router.push('/org-profile');
     } catch (error: any) {
@@ -199,7 +185,7 @@ export default function TeamManagementPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415]">
+      <div className="min-h-screen bg-[#0d0d0d] bg-gradient-to-b from-[#111111] to-[#110a0a]">
         <Header />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-white text-xl">Loading team details...</div>
@@ -211,7 +197,7 @@ export default function TeamManagementPage() {
 
   if (error && !team) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415]">
+      <div className="min-h-screen bg-[#0d0d0d] bg-gradient-to-b from-[#111111] to-[#110a0a]">
         <Header />
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
           <div className="text-red-400 text-xl">{error}</div>
@@ -229,7 +215,7 @@ export default function TeamManagementPage() {
 
   if (!isOwner && !isOrgOwner) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415]">
+      <div className="min-h-screen bg-[#0d0d0d] bg-gradient-to-b from-[#111111] to-[#110a0a]">
         <Header />
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
           <div className="text-red-400 text-xl">You don't have permission to manage this team</div>
@@ -246,7 +232,7 @@ export default function TeamManagementPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415]">
+    <div className="min-h-screen bg-[#0d0d0d] bg-gradient-to-b from-[#111111] to-[#110a0a]">
       <Header />
 
       <div className="container mx-auto px-4 py-8 max-w-7xl">

@@ -1,323 +1,234 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import type { NextPage } from 'next';
-import api from '@/lib/api';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import Valorant from '@/components/icons/valorant';
-import CS2 from '@/components/icons/cs2';
-import Dota2 from '@/components/icons/dota2';
-import PUBG from '@/components/icons/pubg';
-import LOL from '@/components/icons/lol';
-import FreeFire from '@/components/icons/freefire';
-import { useLanguage } from '@/lib/LanguageContext';
+import { useState, useEffect } from "react";
+import type { NextPage } from "next";
+import api from "@/lib/api";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import { useLanguage } from "@/lib/LanguageContext";
 
-const getGameIcon = (game: string) => {
-  switch (game) {
-    case 'Valorant': return <Valorant />;
-    case 'CS2': return <CS2 />;
-    case 'Dota 2': return <Dota2 />;
-    case 'PUBG Mobile': return <PUBG />;
-    case 'League of Legends': return <LOL />;
-    case 'Free Fire': return <FreeFire />;
-    default: return null;
-  }
-};
-
-const formatNumber = (num: number) => {
-  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-  if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-  return num.toLocaleString();
-};
+function fmt(n: number) {
+  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
+  if (n >= 1000)    return `${(n / 1000).toFixed(1)}K`;
+  return n.toLocaleString();
+}
 
 const EsportsData: NextPage = () => {
   const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
-    totalTeams: 0,
-    totalOrganizations: 0,
-    totalPlayers: 0,
-    totalMatches: 0,
-    totalPrizePool: 0,
-    totalTournaments: 0,
-    currency: 'NPR',
+    totalTeams: 0, totalOrganizations: 0, totalPlayers: 0,
+    totalMatches: 0, totalPrizePool: 0, totalTournaments: 0, currency: "NPR",
   });
-  const [topOrganizations, setTopOrganizations] = useState<any[]>([]);
-  const [topTeams, setTopTeams] = useState<any[]>([]);
-  const [topPlayers, setTopPlayers] = useState<any[]>([]);
+  const [topOrgs,     setTopOrgs]     = useState<any[]>([]);
+  const [topTeams,    setTopTeams]    = useState<any[]>([]);
+  const [topPlayers,  setTopPlayers]  = useState<any[]>([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [statsRes, orgsRes, teamsRes, playersRes] = await Promise.all([
-          api.get('/stats/overview'),
-          api.get('/org-auth/all'),
-          api.get('/teams/'),
-          api.get('/teams/players'),
-        ]);
+    Promise.all([
+      api.get("/stats/overview"),
+      api.get("/org-auth/all"),
+      api.get("/teams/"),
+      api.get("/teams/players"),
+    ]).then(([statsRes, orgsRes, teamsRes, playersRes]) => {
+      setStats(statsRes.data.data);
 
-        // Stats
-        setStats(statsRes.data.data);
-
-        // Top Organizations (sorted by teams count, top 4)
-        const orgs = orgsRes.data.data.organizations || [];
-        const sortedOrgs = orgs
-          .sort((a: any, b: any) => (b.teams?.length || 0) - (a.teams?.length || 0))
-          .slice(0, 4)
-          .map((org: any, i: number) => ({
-            rank: i + 1,
-            name: org.organizationName,
-            tag: org.tag,
-            teams: org.teams?.length || 0,
-            championships: org.stats?.championships || 0,
-            logo: org.logo || null,
-            country: org.country,
-          }));
-        setTopOrganizations(sortedOrgs);
-
-        // Top Teams (sorted by wins, top 5)
-        const teams = teamsRes.data.data.teams || [];
-        const sortedTeams = teams
-          .sort((a: any, b: any) => (b.stats?.wins || 0) - (a.stats?.wins || 0))
-          .slice(0, 5)
-          .map((team: any, i: number) => ({
-            rank: i + 1,
-            name: team.name,
-            tag: team.tag,
-            game: team.game,
-            logo: team.logo || null,
-            orgName: team.organization?.organizationName || null,
-            orgTag: team.organization?.tag || null,
-            tournamentsPlayed: team.stats?.tournamentsPlayed || 0,
-            wins: team.stats?.wins || 0,
-          }));
-        setTopTeams(sortedTeams);
-
-        // Top Players (top 6)
-        const players = playersRes.data.data.players || [];
-        const topPlayerList = players.slice(0, 6).map((p: any, i: number) => ({
+      const orgs = (orgsRes.data.data.organizations || [])
+        .sort((a: any, b: any) => (b.teams?.length || 0) - (a.teams?.length || 0))
+        .slice(0, 5)
+        .map((o: any, i: number) => ({
           rank: i + 1,
-          name: p.playerName,
-          team: p.team?.name || 'Free Agent',
-          game: p.game,
-          role: p.role || 'Player',
-          inGameRole: p.inGameRole || '-',
+          name: o.organizationName, tag: o.tag, logo: o.logo || null,
+          country: o.country, teams: o.teams?.length || 0,
+          championships: o.stats?.championships || 0,
         }));
-        setTopPlayers(topPlayerList);
-      } catch (error) {
-        console.error('Error fetching esports data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+      setTopOrgs(orgs);
 
-    fetchData();
+      const teams = (teamsRes.data.data.teams || [])
+        .sort((a: any, b: any) => (b.stats?.wins || 0) - (a.stats?.wins || 0))
+        .slice(0, 6)
+        .map((t: any, i: number) => ({
+          rank: i + 1,
+          name: t.name, tag: t.tag, game: t.game, logo: t.logo || null,
+          orgName: t.organization?.organizationName || null,
+          tournamentsPlayed: t.stats?.tournamentsPlayed || 0,
+          wins: t.stats?.wins || 0,
+        }));
+      setTopTeams(teams);
+
+      const players = (playersRes.data.data.players || [])
+        .slice(0, 8)
+        .map((p: any, i: number) => ({
+          rank: i + 1,
+          name: p.playerName, team: p.team?.name || "Free Agent",
+          game: p.game, role: p.inGameRole || p.role || "Player",
+        }));
+      setTopPlayers(players);
+    }).catch(console.error).finally(() => setLoading(false));
   }, []);
 
-  if (loading) {
+  /* ── shared avatar placeholder ── */
+  const Avatar = ({ name, tag, size = "sm" }: { name: string; tag?: string; size?: "sm" | "lg" }) => {
+    const dim = size === "lg" ? "w-10 h-10 text-xs" : "w-8 h-8 text-[10px]";
     return (
-      <div className="min-h-screen bg-primary-gradient text-white">
-        <Header />
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-gray-400 text-xl">{t.common.loading}</div>
-        </div>
-        <Footer />
+      <div className={`${dim} rounded-lg bg-white/[0.06] border border-white/[0.08] flex items-center justify-center font-bold text-white/60 flex-shrink-0`}>
+        {(tag || name)?.[0]?.toUpperCase()}
       </div>
     );
-  }
+  };
+
+  if (loading) return (
+    <div className="min-h-screen">
+      <Header />
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 rounded-full border-2 border-[#e85d5d]/30 border-t-[#e85d5d] animate-spin" />
+          <p className="text-white/35 text-sm">{t.common.loading}</p>
+        </div>
+      </div>
+      <Footer />
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-primary-gradient text-white">
+    <div className="min-h-screen">
       <Header />
-      <main className="w-full px-4 sm:px-6 py-6 sm:py-8 lg:px-22">
-        {/* Hero Section */}
-        <div className="max-w-7xl mx-auto mb-6">
-          <h1 className="text-2xl sm:text-4xl font-bold mb-2">{t.esportsData.title}</h1>
-          <p className="text-sm sm:text-lg text-gray-300">
-            {t.esportsData.subtitle}
-          </p>
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+
+        {/* ── Page title ── */}
+        <div className="mb-8">
+          <h1 className="font-['Russo_One'] text-3xl sm:text-4xl text-white mb-1">{t.esportsData.title}</h1>
+          <p className="text-white/40 text-sm">{t.esportsData.subtitle}</p>
         </div>
 
-        {/* Stats Overview */}
-        <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
-          <div className="bg-white/10 border border-white/20 rounded-xl p-5 backdrop-blur-sm">
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg mb-4"></div>
-            <div className="text-2xl font-bold mb-1">{formatNumber(stats.totalTeams)}</div>
-            <div className="text-sm text-gray-300">{t.common.teams}</div>
-          </div>
-
-          <div className="bg-white/10 border border-white/20 rounded-xl p-5 backdrop-blur-sm">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg mb-4"></div>
-            <div className="text-2xl font-bold mb-1">{formatNumber(stats.totalOrganizations)}</div>
-            <div className="text-sm text-gray-300">{t.home.stats.organizations}</div>
-          </div>
-
-          <div className="bg-white/10 border border-white/20 rounded-xl p-5 backdrop-blur-sm">
-            <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg mb-4"></div>
-            <div className="text-2xl font-bold mb-1">{formatNumber(stats.totalPlayers)}</div>
-            <div className="text-sm text-gray-300">{t.home.stats.activePlayers}</div>
-          </div>
-
-          <div className="bg-white/10 border border-white/20 rounded-xl p-5 backdrop-blur-sm">
-            <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg mb-4"></div>
-            <div className="text-2xl font-bold mb-1">{formatNumber(stats.totalMatches)}</div>
-            <div className="text-sm text-gray-300">{t.esportsData.recentResults}</div>
-          </div>
-
-          <div className="bg-white/10 border border-white/20 rounded-xl p-5 backdrop-blur-sm">
-            <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-lg mb-4"></div>
-            <div className="text-2xl font-bold mb-1">
-              {stats.currency} {formatNumber(stats.totalPrizePool)}
+        {/* ── Stats overview ── */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px rounded-xl overflow-hidden border border-white/[0.08] bg-white/[0.08] mb-10">
+          {[
+            { label: t.common.teams,                   value: fmt(stats.totalTeams) },
+            { label: t.home.stats.organizations,        value: fmt(stats.totalOrganizations) },
+            { label: t.home.stats.activePlayers,        value: fmt(stats.totalPlayers) },
+            { label: "Matches Played",                  value: fmt(stats.totalMatches) },
+            { label: t.tournaments.totalPrizePool,      value: `${stats.currency} ${fmt(stats.totalPrizePool)}` },
+          ].map(({ label, value }) => (
+            <div key={label} className="bg-[#111111]/90 px-4 py-5 text-center">
+              <p className="font-['Russo_One'] text-2xl text-[#e85d5d] mb-0.5">{value}</p>
+              <p className="text-white/35 text-[11px] uppercase tracking-wider leading-snug">{label}</p>
             </div>
-            <div className="text-sm text-gray-300">{t.tournaments.totalPrizePool}</div>
-          </div>
+          ))}
         </div>
 
-        {/* Organizations and Teams Section */}
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
+        {/* ── Orgs + Teams ── */}
+        <div className="grid lg:grid-cols-2 gap-5 mb-10">
+
           {/* Top Organizations */}
-          <div className="flex flex-col gap-4">
-            <h2 className="text-2xl font-bold">{t.esportsData.topTeams}</h2>
-            <div className="bg-white/10 border border-white/20 rounded-xl p-5 backdrop-blur-sm">
-              {topOrganizations.length > 0 ? (
-                topOrganizations.map((org) => (
-                  <div
-                    key={org.rank}
-                    className="flex items-center justify-between py-4 border-b border-white/10 last:border-b-0"
-                  >
-                    <div className="flex items-center gap-4 flex-1">
-                      <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center text-sm">
-                        #{org.rank}
-                      </div>
-                      {org.logo ? (
-                        <img src={org.logo} alt={org.name} className="w-10 h-10 rounded-lg object-cover" />
-                      ) : (
-                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-700 rounded-lg flex items-center justify-center text-xs font-bold">
-                          {org.tag}
-                        </div>
-                      )}
-                      <div className="flex flex-col">
-                        <div className="font-medium">{org.name}</div>
-                        {org.country && (
-                          <div className="text-xs text-gray-400">{org.country}</div>
-                        )}
-                      </div>
+          <div>
+            <h2 className="font-['Russo_One'] text-base text-white/80 uppercase tracking-widest mb-3">Top Organizations</h2>
+            <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] overflow-hidden">
+              {topOrgs.length > 0 ? topOrgs.map((org, i) => (
+                <div key={org.rank} className={`flex items-center gap-3 px-5 py-3.5 hover:bg-white/[0.03] transition-colors ${i < topOrgs.length - 1 ? "border-b border-white/[0.05]" : ""}`}>
+                  <span className="w-6 text-center text-xs text-white/25 font-medium flex-shrink-0">#{org.rank}</span>
+                  {org.logo
+                    ? <img src={org.logo} alt={org.name} className="w-8 h-8 rounded-lg object-cover flex-shrink-0 border border-white/[0.08]" />
+                    : <Avatar name={org.name} tag={org.tag} />
+                  }
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white/85 text-sm font-semibold truncate">{org.name}</p>
+                    {org.country && <p className="text-white/30 text-xs">{org.country}</p>}
+                  </div>
+                  <div className="flex gap-5 text-right flex-shrink-0">
+                    <div>
+                      <p className="text-white/25 text-[10px] uppercase tracking-wider">Teams</p>
+                      <p className="text-white/70 text-sm font-semibold">{org.teams}</p>
                     </div>
-                    <div className="flex items-center gap-4 sm:gap-8 text-sm">
-                      <div className="flex flex-col">
-                        <span className="text-gray-400 text-xs">{t.common.teams}</span>
-                        <span>{org.teams}</span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-gray-400 text-xs">Championships</span>
-                        <span className="text-yellow-400">{org.championships}</span>
-                      </div>
+                    <div>
+                      <p className="text-white/25 text-[10px] uppercase tracking-wider">Titles</p>
+                      <p className="text-amber-400 text-sm font-semibold">{org.championships}</p>
                     </div>
                   </div>
-                ))
-              ) : (
-                <div className="text-gray-400 text-center py-8">No organizations found</div>
+                </div>
+              )) : (
+                <div className="flex flex-col items-center py-12 text-white/25">
+                  <p className="text-sm">No organizations yet</p>
+                </div>
               )}
             </div>
           </div>
 
           {/* Top Teams */}
-          <div className="flex flex-col gap-4">
-            <h2 className="text-2xl font-bold">{t.esportsData.topTeams}</h2>
-            <div className="bg-white/10 border border-white/20 rounded-xl p-5 backdrop-blur-sm">
-              {topTeams.length > 0 ? (
-                topTeams.map((team) => (
-                  <div
-                    key={team.rank}
-                    className="flex items-center justify-between py-4 border-b border-white/10 last:border-b-0"
-                  >
-                    <div className="flex items-center gap-4 flex-1">
-                      <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center text-sm">
-                        #{team.rank}
-                      </div>
-                      {team.logo ? (
-                        <img src={team.logo} alt={team.name} className="w-10 h-10 rounded-lg object-cover" />
-                      ) : (
-                        <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-700 rounded-lg flex items-center justify-center text-xs font-bold text-white">
-                          {team.tag}
-                        </div>
-                      )}
-                      <div className="flex flex-col">
-                        <div className="font-medium">{team.name}</div>
-                        <div className="text-xs text-gray-400 flex items-center gap-1">
-                          <span className="w-4 h-4 flex items-center justify-center">{getGameIcon(team.game)}</span>
-                          {team.game}
-                          {team.orgName && (
-                            <span className="ml-1 text-purple-400">| {team.orgName}</span>
-                          )}
-                        </div>
-                      </div>
+          <div>
+            <h2 className="font-['Russo_One'] text-base text-white/80 uppercase tracking-widest mb-3">{t.esportsData.topTeams}</h2>
+            <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] overflow-hidden">
+              {topTeams.length > 0 ? topTeams.map((team, i) => (
+                <div key={team.rank} className={`flex items-center gap-3 px-5 py-3.5 hover:bg-white/[0.03] transition-colors ${i < topTeams.length - 1 ? "border-b border-white/[0.05]" : ""}`}>
+                  <span className="w-6 text-center text-xs text-white/25 font-medium flex-shrink-0">#{team.rank}</span>
+                  {team.logo
+                    ? <img src={team.logo} alt={team.name} className="w-8 h-8 rounded-lg object-cover flex-shrink-0 border border-white/[0.08]" />
+                    : <Avatar name={team.name} tag={team.tag} />
+                  }
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white/85 text-sm font-semibold truncate">{team.name}{team.tag && <span className="text-white/30 font-normal"> [{team.tag}]</span>}</p>
+                    <p className="text-white/30 text-xs">{team.game}{team.orgName && ` · ${team.orgName}`}</p>
+                  </div>
+                  <div className="flex gap-5 text-right flex-shrink-0">
+                    <div>
+                      <p className="text-white/25 text-[10px] uppercase tracking-wider">Events</p>
+                      <p className="text-white/70 text-sm font-semibold">{team.tournamentsPlayed}</p>
                     </div>
-                    <div className="flex items-center gap-4 sm:gap-8 text-sm">
-                      <div className="flex flex-col">
-                        <span className="text-gray-400 text-xs">{t.esportsData.tournaments}</span>
-                        <span>{team.tournamentsPlayed}</span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-gray-400 text-xs">{t.esportsData.wins}</span>
-                        <span className="text-green-400">{team.wins}</span>
-                      </div>
+                    <div>
+                      <p className="text-white/25 text-[10px] uppercase tracking-wider">Wins</p>
+                      <p className="text-emerald-400 text-sm font-semibold">{team.wins}</p>
                     </div>
                   </div>
-                ))
-              ) : (
-                <div className="text-gray-400 text-center py-8">No teams found</div>
+                </div>
+              )) : (
+                <div className="flex flex-col items-center py-12 text-white/25">
+                  <p className="text-sm">No teams yet</p>
+                </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* Top Individual Performers */}
-        <div className="max-w-7xl mx-auto mb-12">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold">{t.esportsData.topPlayers}</h2>
-          </div>
-
-          <div className="bg-white/10 border border-white/20 rounded-xl overflow-x-auto backdrop-blur-sm">
-            {/* Table Header */}
-            <div className="grid grid-cols-6 gap-4 px-5 py-4 border-b border-white/10 text-sm text-gray-400 min-w-[600px]">
-              <div className="col-span-2">{t.esportsData.player}</div>
-              <div>{t.esportsData.team}</div>
-              <div>{t.tournament.game}</div>
-              <div>{t.common.details}</div>
-              <div>{t.common.details}</div>
+        {/* ── Top Players ── */}
+        <div>
+          <h2 className="font-['Russo_One'] text-base text-white/80 uppercase tracking-widest mb-3">{t.esportsData.topPlayers}</h2>
+          <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] overflow-hidden">
+            {/* Header row */}
+            <div className="hidden sm:grid grid-cols-12 gap-4 px-5 py-3 border-b border-white/[0.06] text-[11px] text-white/30 uppercase tracking-widest">
+              <div className="col-span-1">#</div>
+              <div className="col-span-4">{t.esportsData.player}</div>
+              <div className="col-span-3">{t.esportsData.team}</div>
+              <div className="col-span-2">{t.tournament.game}</div>
+              <div className="col-span-2">Role</div>
             </div>
 
-            {/* Table Body */}
-            {topPlayers.length > 0 ? (
-              topPlayers.map((player) => (
-                <div
-                  key={player.rank}
-                  className="grid grid-cols-6 gap-4 px-5 py-4 border-b border-white/10 last:border-b-0 items-center hover:bg-white/5 transition-colors min-w-[600px]"
-                >
-                  <div className="col-span-2 flex items-center gap-3">
-                    <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center text-sm">
-                      #{player.rank}
-                    </div>
-                    <div className="w-10 h-10 bg-gradient-to-br from-red-400 to-pink-600 rounded-full"></div>
-                    <span className="font-medium">{player.name}</span>
+            {topPlayers.length > 0 ? topPlayers.map((p, i) => (
+              <div key={p.rank}
+                className={`flex sm:grid sm:grid-cols-12 items-center gap-3 sm:gap-4 px-5 py-3.5 hover:bg-white/[0.03] transition-colors ${i < topPlayers.length - 1 ? "border-b border-white/[0.05]" : ""}`}>
+                <span className="w-6 text-center text-xs text-white/25 font-medium flex-shrink-0 sm:col-span-1">#{p.rank}</span>
+                <div className="flex items-center gap-2.5 flex-1 min-w-0 sm:col-span-4">
+                  <div className="w-8 h-8 rounded-full bg-[#e85d5d]/10 border border-[#e85d5d]/20 flex items-center justify-center text-[10px] font-bold text-[#e85d5d]/80 flex-shrink-0">
+                    {p.name?.[0]?.toUpperCase()}
                   </div>
-                  <div className="text-gray-300">{player.team}</div>
-                  <div className="flex items-center gap-2 text-gray-300">
-                    <span className="w-4 h-4 flex items-center justify-center">{getGameIcon(player.game)}</span>
-                    {player.game}
-                  </div>
-                  <div className="text-blue-400">{player.role}</div>
-                  <div className="text-green-400">{player.inGameRole}</div>
+                  <span className="text-white/85 text-sm font-semibold truncate">{p.name}</span>
                 </div>
-              ))
-            ) : (
-              <div className="text-gray-400 text-center py-8">No players found</div>
+                <span className="hidden sm:block text-white/45 text-sm truncate sm:col-span-3">{p.team}</span>
+                <span className="hidden sm:block text-white/45 text-sm truncate sm:col-span-2">{p.game}</span>
+                <span className="hidden sm:block text-sky-400/80 text-sm sm:col-span-2">{p.role}</span>
+                {/* Mobile: show team + game inline */}
+                <span className="sm:hidden text-white/35 text-xs truncate">{p.team} · {p.game}</span>
+              </div>
+            )) : (
+              <div className="flex flex-col items-center py-14 text-white/25">
+                <p className="text-sm">No player data yet</p>
+              </div>
             )}
           </div>
         </div>
-      </main>
+
+      </div>
+
       <Footer />
     </div>
   );

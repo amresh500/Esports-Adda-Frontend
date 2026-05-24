@@ -7,9 +7,11 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useLanguage } from "@/lib/LanguageContext";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function OrganizationLogin() {
   const { t } = useLanguage();
+  const { refresh } = useAuth();
   const router = useRouter();
   const [formData, setFormData] = useState({
     email: "",
@@ -35,12 +37,12 @@ export default function OrganizationLogin() {
     try {
       const response = await api.post('/org-auth/login', formData);
 
-      // Store token and account type
-      localStorage.setItem("token", response.data.data.token);
+      // Cookie is set by server — only store non-sensitive metadata in localStorage
       localStorage.setItem("accountType", "organization");
       localStorage.setItem("organizationData", JSON.stringify(response.data.data.organization));
+      if (response.data?.data?.token) sessionStorage.setItem('socketToken', response.data.data.token);
 
-      // Redirect to organization profile
+      await refresh();
       router.push("/org-profile");
     } catch (err: any) {
       setError(err.response?.data?.message || "Login failed. Please try again.");
@@ -50,7 +52,7 @@ export default function OrganizationLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415]">
+    <div className="min-h-screen bg-[#0d0d0d] bg-gradient-to-b from-[#111111] to-[#110a0a]">
       <Header />
       <div className="max-w-md mx-auto py-12 px-4">
         <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20">

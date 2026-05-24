@@ -425,7 +425,8 @@ const SignUpPage = () => {
           {step === 1 && (
             <div className="space-y-5">
               {/* Google Sign Up Button - Only for players */}
-              {accountType === "player" && (
+              {/* Google Sign Up is not yet implemented */}
+              {/* {accountType === "player" && (
                 <>
                   <button
                     onClick={handleGoogleSignUp}
@@ -438,14 +439,13 @@ const SignUpPage = () => {
                     </span>
                   </button>
 
-                  {/* Divider */}
                   <div className="flex items-center gap-4">
                     <div className="flex-1 h-[1px] bg-[#D9D9D9]"></div>
                     <span className="text-[#D1D6E2] font-inter text-sm">or with e-mail</span>
                     <div className="flex-1 h-[1px] bg-[#D9D9D9]"></div>
                   </div>
                 </>
-              )}
+              )} */}
 
               <input
                 type="email"

@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import axios from 'axios';
+import api from '@/lib/api';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ConfirmDialog from '@/components/ConfirmDialog';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 const GAMES = [
   'Valorant',
@@ -67,7 +66,7 @@ export default function TeamDetailsPage() {
 
   const fetchTeamDetails = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/teams/${teamId}`);
+      const response = await api.get(`/teams/${teamId}`);
       setTeam(response.data.data.team);
       setLoading(false);
     } catch (error: any) {
@@ -79,29 +78,24 @@ export default function TeamDetailsPage() {
 
   const checkPermissions = async () => {
     try {
-      const token = localStorage.getItem('token');
       const accountType = localStorage.getItem('accountType');
 
-      if (!token) {
+      if (!accountType) {
         setIsOwner(false);
         setIsOrgOwner(false);
         return;
       }
 
       // Get team details
-      const teamResponse = await axios.get(`${API_URL}/api/teams/${teamId}`);
+      const teamResponse = await api.get(`/teams/${teamId}`);
       const teamData = teamResponse.data.data.team;
 
       if (accountType === 'player') {
-        const response = await axios.get(`${API_URL}/api/profile/my`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await api.get(`/profile/my`);
         const userId = response.data.data.profile.user._id;
         setIsOwner(teamData.owner === userId || teamData.teamLeader === userId);
       } else if (accountType === 'organization') {
-        const response = await axios.get(`${API_URL}/api/org-auth/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await api.get(`/org-auth/me`);
         const orgId = response.data.data.organization._id;
         setIsOrgOwner(teamData.organization === orgId);
       }
@@ -113,16 +107,14 @@ export default function TeamDetailsPage() {
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
       // Use the team's primary game
       const memberData = {
         ...addMemberForm,
         game: team.game,
       };
-      await axios.post(
-        `${API_URL}/api/teams/${teamId}/members`,
-        memberData,
-        { headers: { Authorization: `Bearer ${token}` } }
+      await api.post(
+        `/teams/${teamId}/members`,
+        memberData
       );
       setSuccess('Member added successfully!');
       setShowAddMemberModal(false);
@@ -148,10 +140,7 @@ export default function TeamDetailsPage() {
     if (!memberToRemove) return;
 
     try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${API_URL}/api/teams/${teamId}/members/${memberToRemove.gameIndex}/${memberToRemove.memberIndex}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.delete(`/teams/${teamId}/members/${memberToRemove.gameIndex}/${memberToRemove.memberIndex}`);
       setSuccess('Member removed successfully!');
       setShowRemoveMemberModal(false);
       setMemberToRemove(null);
@@ -165,10 +154,7 @@ export default function TeamDetailsPage() {
 
   const handleDeleteTeam = async () => {
     try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${API_URL}/api/teams/${teamId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.delete(`/teams/${teamId}`);
       setShowDeleteTeamModal(false);
       router.push('/org-profile');
     } catch (error: any) {
@@ -179,7 +165,7 @@ export default function TeamDetailsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415]">
+      <div className="min-h-screen bg-[#0d0d0d] bg-gradient-to-b from-[#111111] to-[#110a0a]">
         <Header />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-white text-xl">Loading team details...</div>
@@ -191,7 +177,7 @@ export default function TeamDetailsPage() {
 
   if (error && !team) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415]">
+      <div className="min-h-screen bg-[#0d0d0d] bg-gradient-to-b from-[#111111] to-[#110a0a]">
         <Header />
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
           <div className="text-red-400 text-xl">{error}</div>
@@ -208,7 +194,7 @@ export default function TeamDetailsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415]">
+    <div className="min-h-screen bg-[#0d0d0d] bg-gradient-to-b from-[#111111] to-[#110a0a]">
       <Header />
 
       <div className="container mx-auto px-4 py-8 max-w-7xl">

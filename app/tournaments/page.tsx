@@ -2,7 +2,6 @@
 
 import type { NextPage } from 'next';
 import { useState, useEffect } from 'react';
-import Image from "next/image";
 import api from '@/lib/api';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -21,7 +20,7 @@ const Tournaments: NextPage = () => {
   const [sortBy, setSortBy] = useState('Start Date');
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [allTournaments, setAllTournaments] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [userTeams, setUserTeams] = useState<any[]>([]);
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
   const [selectedTournamentId, setSelectedTournamentId] = useState('');
@@ -89,23 +88,21 @@ const Tournaments: NextPage = () => {
 
     const fetchUserTeams = async () => {
       try {
-        const token = localStorage.getItem("token");
         const accountType = localStorage.getItem("accountType");
+        if (!accountType) return;
 
-        if (token) {
-          if (accountType === "player") {
-            const response = await api.get('/profile/my');
-            const teams = response.data.data.profile.teams || [];
-            console.log("Player teams loaded:", teams);
-            setUserTeams(teams);
-          } else if (accountType === "organization") {
-            const response = await api.get('/org-auth/me');
-            const org = response.data.data.organization;
-            const teams = org.teams || [];
-            console.log("Organization teams loaded:", teams);
-            setUserTeams(teams);
-            setCurrentUserOrgId(org._id);
-          }
+        if (accountType === "player") {
+          const response = await api.get('/profile/my');
+          const teams = response.data.data.profile.teams || [];
+          console.log("Player teams loaded:", teams);
+          setUserTeams(teams);
+        } else if (accountType === "organization") {
+          const response = await api.get('/org-auth/me');
+          const org = response.data.data.organization;
+          const teams = org.teams || [];
+          console.log("Organization teams loaded:", teams);
+          setUserTeams(teams);
+          setCurrentUserOrgId(org._id);
         }
       } catch (error) {
         console.error("Error fetching user teams:", error);
@@ -117,10 +114,9 @@ const Tournaments: NextPage = () => {
   }, []);
 
   const handleJoinTournament = (tournamentId: string) => {
-    const token = localStorage.getItem("token");
     const accountType = localStorage.getItem("accountType");
 
-    if (!token) {
+    if (!accountType) {
       setRegistrationError("Please login to register for tournaments");
       return;
     }
@@ -245,8 +241,11 @@ const Tournaments: NextPage = () => {
 
   // Returns a reason string if the user cannot register, or null if they can
   const getRegistrationBlockReason = (tournament: any): string | null => {
-    const token = localStorage.getItem("token");
-    if (!token) return "You must be logged in to register.";
+    const accountType = localStorage.getItem("accountType");
+    if (!accountType) return "You must be logged in to register.";
+    if (accountType !== "player" && accountType !== "organization") {
+      return "Only player or organization accounts can register for tournaments.";
+    }
 
     if (tournament.status !== 'Upcoming') {
       const labels: Record<string, string> = {
@@ -1212,7 +1211,7 @@ const Tournaments: NextPage = () => {
                       style={{
                         flex: 1,
                         padding: '12px 24px',
-                        backgroundColor: teamIsIneligible ? 'rgba(255,255,255,0.1)' : '#155DFC',
+                        backgroundColor: teamIsIneligible ? 'rgba(255,255,255,0.1)' : '#e85d5d',
                         border: 'none',
                         borderRadius: '8px',
                         color: teamIsIneligible ? 'rgba(255,255,255,0.3)' : 'white',
@@ -1401,7 +1400,7 @@ const Tournaments: NextPage = () => {
                     }}
                     style={{
                       padding: '10px 20px',
-                      backgroundColor: '#155DFC',
+                      backgroundColor: '#e85d5d',
                       color: 'white',
                       border: 'none',
                       borderRadius: '8px',
@@ -1444,9 +1443,9 @@ const styles: { [key: string]: React.CSSProperties } = {
   tournaments: {
     width: '100%',
     minHeight: '100vh',
-    background: 'linear-gradient(180deg, #111 0%, #441415 59.28%)',
+    background: 'linear-gradient(180deg, #111111 0%, #110a0a 100%)',
     paddingBottom: '80px',
-    fontFamily: "'Plus Jakarta Sans', Arial, sans-serif",
+    fontFamily: "var(--font-body), sans-serif",
     color: '#fff',
   },
   mainContent: {
@@ -1456,9 +1455,10 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   pageTitle: {
     fontSize: 'clamp(24px, 5vw, 36px)',
-    fontWeight: '600',
+    fontWeight: '700',
     marginBottom: '8px',
     color: '#fff',
+    fontFamily: "var(--font-display), sans-serif",
   },
   pageSubtitle: {
     fontSize: 'clamp(14px, 3vw, 18px)',

@@ -117,10 +117,10 @@ export function useChat(game: string | null): UseChatReturn {
   // at connection time. If no token exists the socket connects as a guest
   // (can receive but not send messages).
   useEffect(() => {
+    // Socket.io can't use httpOnly cookies — use sessionStorage token (set at login, tab-scoped)
     const token =
-      typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      typeof window !== "undefined" ? sessionStorage.getItem("socketToken") : null;
 
-    // Create socket with auth token (or without for guests)
     const socket = io(API_URL, {
       auth: token ? { token } : {},
       transports: ["websocket", "polling"],

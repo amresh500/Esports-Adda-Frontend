@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import axios from 'axios';
+import api from '@/lib/api';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import TournamentBracket from '@/components/TournamentBracket';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export default function PublicBracketPage() {
   const params = useParams();
@@ -49,7 +48,7 @@ export default function PublicBracketPage() {
 
   const fetchTournamentDetails = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/tournaments/${tournamentId}`);
+      const response = await api.get(`/tournaments/${tournamentId}`);
       setTournament(response.data.data.tournament);
       setLoading(false);
     } catch (error: any) {
@@ -61,26 +60,16 @@ export default function PublicBracketPage() {
 
   const checkPermissions = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setIsOrganizer(false);
-        return;
-      }
-
       const accountType = localStorage.getItem('accountType');
       if (accountType !== 'organization') {
         setIsOrganizer(false);
         return;
       }
 
-      const response = await axios.get(`${API_URL}/api/tournaments/${tournamentId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.get(`/tournaments/${tournamentId}`);
 
       const tournamentData = response.data.data.tournament;
-      const orgResponse = await axios.get(`${API_URL}/api/org-auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const orgResponse = await api.get(`/org-auth/me`);
 
       const userOrgId = orgResponse.data.data.organization._id;
       const tournamentOrgId = tournamentData.organizer?._id || tournamentData.organizer;
@@ -121,11 +110,9 @@ export default function PublicBracketPage() {
     });
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(
-        `${API_URL}/api/tournaments/${tournamentId}/matches/${selectedMatch.matchNumber}/result`,
-        resultForm,
-        { headers: { Authorization: `Bearer ${token}` } }
+      const response = await api.post(
+        `/tournaments/${tournamentId}/matches/${selectedMatch.matchNumber}/result`,
+        resultForm
       );
 
       console.log('Report result response:', response.data);
@@ -162,7 +149,7 @@ export default function PublicBracketPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415]">
+      <div className="min-h-screen bg-[#0d0d0d] bg-gradient-to-b from-[#111111] to-[#110a0a]">
         <Header />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-white text-xl">Loading bracket...</div>
@@ -174,7 +161,7 @@ export default function PublicBracketPage() {
 
   if (error || !tournament) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415]">
+      <div className="min-h-screen bg-[#0d0d0d] bg-gradient-to-b from-[#111111] to-[#110a0a]">
         <Header />
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
           <div className="text-red-400 text-xl">{error || 'Tournament not found'}</div>
@@ -191,7 +178,7 @@ export default function PublicBracketPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415]">
+    <div className="min-h-screen bg-[#0d0d0d] bg-gradient-to-b from-[#111111] to-[#110a0a]">
       <Header />
 
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-7xl">
@@ -348,13 +335,14 @@ export default function PublicBracketPage() {
             <div className="space-y-6">
               {/* Group matches by round and bracket */}
               {Object.entries(
-                tournament.matches.reduce((acc: any, match: any) => {
+                tournament.matches.reduce((acc: Record<string, any[]>, match: any) => {
                   const key = `${match.bracket || 'main'}-round-${match.round}`;
                   if (!acc[key]) acc[key] = [];
                   acc[key].push(match);
                   return acc;
-                }, {})
-              ).map(([key, matches]: [string, any]) => {
+                }, {} as Record<string, any[]>)
+              ).map((entry) => {
+                const [key, matches] = entry as [string, any[]];
                 const [bracket, , round] = key.split('-');
                 return (
                   <div key={key} className="space-y-3">

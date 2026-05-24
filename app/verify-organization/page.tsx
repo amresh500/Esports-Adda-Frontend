@@ -46,7 +46,7 @@ export default function VerifyOrganization() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415]">
+    <div className="min-h-screen bg-[#0d0d0d] bg-gradient-to-b from-[#111111] to-[#110a0a]">
       <Header />
       <div className="max-w-md mx-auto py-12 px-4">
         <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 text-center">

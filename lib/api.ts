@@ -7,23 +7,8 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true,
+  withCredentials: true, // sends httpOnly cookie automatically on every request
 });
-
-// Add token to requests if it exists
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
 
 // Auth API calls
 export const authAPI = {
@@ -45,8 +30,10 @@ export const authAPI = {
 
   login: async (data: { email: string; password: string; rememberMe?: boolean }) => {
     const response = await api.post('/auth/login', data);
-    if (response.data.success && response.data.data.token) {
-      localStorage.setItem('token', response.data.data.token);
+    // httpOnly cookie is set by server automatically
+    // Store token in sessionStorage for Socket.io (tab-scoped, cleared on browser close)
+    if (response.data?.data?.token) {
+      sessionStorage.setItem('socketToken', response.data.data.token);
     }
     return response.data;
   },
@@ -56,8 +43,12 @@ export const authAPI = {
     return response.data;
   },
 
-  logout: () => {
-    localStorage.removeItem('token');
+  logout: async () => {
+    // Clear server-side httpOnly cookie via API
+    try {
+      await api.post('/auth/logout');
+    } catch {}
+    // Clear non-sensitive localStorage metadata
     localStorage.removeItem('accountType');
     localStorage.removeItem('userId');
     localStorage.removeItem('organizationData');
@@ -65,6 +56,8 @@ export const authAPI = {
     localStorage.removeItem('adminOrgId');
     localStorage.removeItem('adminOrgName');
     localStorage.removeItem('isAdmin');
+    // Clear socket token
+    sessionStorage.removeItem('socketToken');
   },
 
   verifyEmail: async (token: string) => {

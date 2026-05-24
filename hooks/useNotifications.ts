@@ -54,22 +54,15 @@ export function useNotifications(): UseNotificationsReturn {
   const socketRef = useRef<Socket | null>(null);
   const mountedRef = useRef(true);
 
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem("token");
-    return { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
-  };
+  // Cookie is sent automatically by the browser — use credentials: 'include'
+  const fetchOpts = { credentials: "include" as const, headers: { "Content-Type": "application/json" } };
 
-  // Fetch initial notifications + unread count
   const fetchNotifications = useCallback(async (pageNum = 1) => {
     try {
       setIsLoading(true);
       const [notifsRes, countRes] = await Promise.all([
-        fetch(`${API_URL}/api/notifications?page=${pageNum}&limit=20`, {
-          headers: getAuthHeaders(),
-        }),
-        fetch(`${API_URL}/api/notifications/unread-count`, {
-          headers: getAuthHeaders(),
-        }),
+        fetch(`${API_URL}/api/notifications?page=${pageNum}&limit=20`, fetchOpts),
+        fetch(`${API_URL}/api/notifications/unread-count`, fetchOpts),
       ]);
 
       const [notifsData, countData] = await Promise.all([
@@ -105,12 +98,11 @@ export function useNotifications(): UseNotificationsReturn {
     }
   }, [fetchNotifications, isLoading, hasMore, page]);
 
-  // Mark a single notification as read
   const markAsRead = useCallback(async (id: string) => {
     try {
       const res = await fetch(`${API_URL}/api/notifications/${id}/read`, {
         method: "PATCH",
-        headers: getAuthHeaders(),
+        ...fetchOpts,
       });
       const data = await res.json();
       if (data.success && mountedRef.current) {
@@ -124,12 +116,11 @@ export function useNotifications(): UseNotificationsReturn {
     }
   }, []);
 
-  // Mark all notifications as read
   const markAllAsRead = useCallback(async () => {
     try {
       const res = await fetch(`${API_URL}/api/notifications/read-all`, {
         method: "PATCH",
-        headers: getAuthHeaders(),
+        ...fetchOpts,
       });
       const data = await res.json();
       if (data.success && mountedRef.current) {
@@ -141,13 +132,12 @@ export function useNotifications(): UseNotificationsReturn {
     }
   }, []);
 
-  // Delete a notification
   const deleteNotification = useCallback(async (id: string) => {
     try {
       const wasUnread = notifications.find((n) => n._id === id && !n.isRead);
       const res = await fetch(`${API_URL}/api/notifications/${id}`, {
         method: "DELETE",
-        headers: getAuthHeaders(),
+        ...fetchOpts,
       });
       const data = await res.json();
       if (data.success && mountedRef.current) {
@@ -159,18 +149,14 @@ export function useNotifications(): UseNotificationsReturn {
     }
   }, [notifications]);
 
-  // Connect socket for real-time delivery
   useEffect(() => {
     mountedRef.current = true;
-
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    // Only fetch if logged in
     fetchNotifications(1);
 
+    // Socket.io can't use cookies directly — pass accountType so server can identify session type
+    // The socket auth middleware already falls back gracefully for guests
     const socket = io(API_URL, {
-      auth: { token },
+      withCredentials: true,
       transports: ["websocket"],
     });
     socketRef.current = socket;

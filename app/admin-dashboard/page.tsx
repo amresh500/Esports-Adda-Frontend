@@ -2,13 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import api from '@/lib/api';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import AddStaffModal from '@/components/AddStaffModal';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 const GAMES = [
   'Valorant', 'CS2', 'PUBG Mobile', 'Dota 2', 'League of Legends',
@@ -65,10 +64,7 @@ export default function AdminDashboardPage() {
 
   const fetchOrganization = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_URL}/api/org-auth/admin-org`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.get(`/org-auth/admin-org`);
       setOrganization(response.data.data.organization);
       setLoading(false);
     } catch (error: any) {
@@ -86,10 +82,7 @@ export default function AdminDashboardPage() {
 
   const fetchTournaments = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_URL}/api/tournaments/my/tournaments`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.get(`/tournaments/my/tournaments`);
       setTournaments(response.data.data.tournaments || []);
     } catch (error: any) {
       console.error('Fetch tournaments error:', error);
@@ -99,11 +92,9 @@ export default function AdminDashboardPage() {
   const handleAddStaff = async ({ username, role, department }: { username: string; role: string; department: string }) => {
     setAddingStaff(true);
     try {
-      const token = localStorage.getItem('token');
-      await axios.post(
-        `${API_URL}/api/org-auth/my/staff`,
-        { username, role, department },
-        { headers: { Authorization: `Bearer ${token}` } }
+      await api.post(
+        `/org-auth/my/staff`,
+        { username, role, department }
       );
 
       setSuccess(`Staff member ${username} added successfully!`);
@@ -126,10 +117,7 @@ export default function AdminDashboardPage() {
   const handleRemoveStaff = async () => {
     if (!staffToRemove) return;
     try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${API_URL}/api/org-auth/my/staff/${staffToRemove}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.delete(`/org-auth/my/staff/${staffToRemove}`);
       setSuccess('Staff member removed successfully!');
       setShowRemoveStaffModal(false);
       setStaffToRemove(null);
@@ -144,10 +132,7 @@ export default function AdminDashboardPage() {
   const handleDeleteTournament = async () => {
     if (!tournamentToDelete) return;
     try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${API_URL}/api/tournaments/${tournamentToDelete._id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.delete(`/tournaments/${tournamentToDelete._id}`);
       setSuccess('Tournament deleted successfully!');
       setShowDeleteTournamentModal(false);
       setTournamentToDelete(null);
@@ -164,10 +149,7 @@ export default function AdminDashboardPage() {
     setError('');
     setSuccess('');
     try {
-      const token = localStorage.getItem('token');
-      await axios.post(`${API_URL}/api/tournaments`, tournamentForm, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.post(`/tournaments`, tournamentForm);
       setSuccess('Tournament created successfully!');
       setShowCreateTournamentForm(false);
       setTournamentForm({
@@ -189,14 +171,14 @@ export default function AdminDashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415] flex items-center justify-center">
+      <div className="min-h-screen bg-[#0d0d0d] bg-gradient-to-b from-[#111111] to-[#110a0a] flex items-center justify-center">
         <div className="text-white text-xl">Loading admin dashboard...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415]">
+    <div className="min-h-screen bg-[#0d0d0d] bg-gradient-to-b from-[#111111] to-[#110a0a]">
       <Header />
       <div className="max-w-6xl mx-auto py-12 px-4">
         {/* Header */}

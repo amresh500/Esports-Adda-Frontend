@@ -83,20 +83,20 @@ export default function WatchNowPage() {
     switch (status) {
       case "live":
         return (
-          <span className="flex items-center gap-1.5 px-3 py-1 bg-red-500/20 border border-red-500/50 rounded-full text-red-400 text-xs font-arial">
+          <span className="flex items-center gap-1.5 px-3 py-1 bg-red-500/20 border border-red-500/50 rounded-full text-red-400 text-xs font-body">
             <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
             LIVE
           </span>
         );
       case "scheduled":
         return (
-          <span className="px-3 py-1 bg-blue-500/20 border border-blue-500/50 rounded-full text-blue-400 text-xs font-arial">
+          <span className="px-3 py-1 bg-blue-500/20 border border-blue-500/50 rounded-full text-blue-400 text-xs font-body">
             UPCOMING
           </span>
         );
       case "completed":
         return (
-          <span className="px-3 py-1 bg-gray-500/20 border border-gray-500/50 rounded-full text-gray-400 text-xs font-arial">
+          <span className="px-3 py-1 bg-gray-500/20 border border-gray-500/50 rounded-full text-gray-400 text-xs font-body">
             ENDED
           </span>
         );
@@ -106,15 +106,15 @@ export default function WatchNowPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415]">
+    <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, #111111 0%, #110a0a 100%)' }}>
       <Header />
 
       {/* Hero Section */}
       <div className="px-4 sm:px-8 lg:px-20 py-6 sm:py-8">
-        <h1 className="font-plus-jakarta text-2xl sm:text-4xl text-white mb-2">
+        <h1 className="font-['Russo_One'] text-2xl sm:text-4xl text-white mb-2">
           {t.watchNow.title}
         </h1>
-        <p className="font-plus-jakarta text-sm sm:text-lg text-white/70">
+        <p className="text-sm sm:text-lg text-white/70">
           Watch live esports matches and tournament streams from Nepal and
           around the world
         </p>
@@ -131,7 +131,7 @@ export default function WatchNowPage() {
                 placeholder="Search tournaments, organizers..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 text-white font-arial text-base placeholder-gray-400 focus:outline-none focus:border-white/40"
+                className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 text-white font-body text-base placeholder-gray-400 focus:outline-none focus:border-white/40"
               />
               <svg
                 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5"
@@ -153,7 +153,7 @@ export default function WatchNowPage() {
           <div className="flex flex-col md:flex-row gap-4">
             {/* Status Filter */}
             <div className="flex-1">
-              <label className="block text-white/70 text-sm font-arial mb-2">
+              <label className="block text-white/70 text-sm font-body mb-2">
                 Status
               </label>
               <div className="flex flex-wrap gap-2">
@@ -161,7 +161,7 @@ export default function WatchNowPage() {
                   <button
                     key={option.value}
                     onClick={() => setSelectedStatus(option.value)}
-                    className={`px-4 py-2 rounded-lg font-arial text-sm transition-all ${
+                    className={`px-4 py-2 rounded-lg font-body text-sm transition-all ${
                       selectedStatus === option.value
                         ? "bg-[#e85d5d] text-white"
                         : "bg-white/10 text-white/70 hover:bg-white/15"
@@ -175,13 +175,13 @@ export default function WatchNowPage() {
 
             {/* Game Filter */}
             <div className="flex-1">
-              <label className="block text-white/70 text-sm font-arial mb-2">
+              <label className="block text-white/70 text-sm font-body mb-2">
                 Game
               </label>
               <select
                 value={selectedGame}
                 onChange={(e) => setSelectedGame(e.target.value)}
-                className="w-full px-4 py-2 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 text-white font-arial text-sm focus:outline-none focus:border-white/40 [&>option]:bg-gray-900 [&>option]:text-white"
+                className="w-full px-4 py-2 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 text-white font-body text-sm focus:outline-none focus:border-white/40 [&>option]:bg-gray-900 [&>option]:text-white"
               >
                 <option value="all">All Games</option>
                 {games.map((game) => (
@@ -199,11 +199,11 @@ export default function WatchNowPage() {
       <div className="px-4 sm:px-8 lg:px-20 pb-12">
         {loading ? (
           <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/20 p-12 text-center">
-            <p className="text-white/70 font-arial text-lg">Loading streams...</p>
+            <p className="text-white/70 font-body text-lg">Loading streams...</p>
           </div>
         ) : filteredStreams.length === 0 ? (
           <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/20 p-12 text-center">
-            <p className="text-white/70 font-arial text-lg">
+            <p className="text-white/70 font-body text-lg">
               {t.watchNow.noStreams}
             </p>
           </div>
@@ -251,7 +251,7 @@ export default function WatchNowPage() {
                                 d="M12 6v6l4 2"
                               />
                             </svg>
-                            <p className="text-white font-arial text-sm">
+                            <p className="text-white font-body text-sm">
                               Starting Soon
                             </p>
                           </div>
@@ -267,7 +267,7 @@ export default function WatchNowPage() {
                                 d="M8 5v14l11-7z"
                               />
                             </svg>
-                            <p className="text-white font-arial text-sm">
+                            <p className="text-white font-body text-sm">
                               Watch Recording
                             </p>
                           </div>
@@ -280,7 +280,7 @@ export default function WatchNowPage() {
                 {/* Stream Info */}
                 <div className="p-5">
                   <div className="flex items-start justify-between mb-3">
-                    <h3 className="font-arial text-lg text-white flex-1 pr-4">
+                    <h3 className="font-body text-lg text-white flex-1 pr-4">
                       {stream.title}
                     </h3>
                     {getStatusBadge(stream.status)}
@@ -301,7 +301,7 @@ export default function WatchNowPage() {
                           d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
                         />
                       </svg>
-                      <p className="font-arial text-sm text-white/70">
+                      <p className="font-body text-sm text-white/70">
                         {stream.tournamentName || stream.tournament?.name || "Unknown Tournament"}
                       </p>
                       {stream.isNepal && (
@@ -323,7 +323,7 @@ export default function WatchNowPage() {
                           d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
                         />
                       </svg>
-                      <p className="font-arial text-sm text-white/70">
+                      <p className="font-body text-sm text-white/70">
                         {stream.organizerName}
                       </p>
                     </div>
@@ -349,14 +349,14 @@ export default function WatchNowPage() {
                           d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                         />
                       </svg>
-                      <p className="font-arial text-sm text-white/70">
+                      <p className="font-body text-sm text-white/70">
                         {stream.game}
                       </p>
                     </div>
 
                   </div>
 
-                  <button className="w-full px-4 py-2.5 bg-[#e85d5d] hover:bg-[#d64d4d] rounded-lg text-white font-arial text-sm transition-all">
+                  <button className="w-full px-4 py-2.5 bg-[#e85d5d] hover:bg-[#d64d4d] rounded-lg text-white font-body text-sm transition-all">
                     {stream.status === "live"
                       ? "Watch Now"
                       : stream.status === "scheduled"

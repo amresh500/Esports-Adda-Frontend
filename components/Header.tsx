@@ -1,246 +1,297 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Logo from "@/components/icons/logo";
-import { authAPI } from "@/lib/api";
 import NotificationBell from "@/components/NotificationBell";
 import LanguageToggle from "@/components/LanguageToggle";
 import { useLanguage } from "@/lib/LanguageContext";
+import { useAuth } from "@/lib/AuthContext";
+import { useConfirm } from "@/hooks/useConfirm";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 export default function Header() {
-  const [user, setUser] = useState<any>(null);
-  const [accountType, setAccountType] = useState<string>("");
-  const [showDropdown, setShowDropdown] = useState(false);
+  const { user, accountType, isOrgAdmin, isSiteAdmin, isLoggedIn, mounted, logout } = useAuth();
+  const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm();
+  const [showDropdown, setShowDropdown]     = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isOrgAdmin, setIsOrgAdmin] = useState(false);
-  const [isSiteAdmin, setIsSiteAdmin] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const router = useRouter();
-  const { t } = useLanguage();
+  const [scrolled, setScrolled]             = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const router   = useRouter();
+  const pathname = usePathname();
+  const { t }    = useLanguage();
 
   useEffect(() => {
-    setMounted(true);
-    checkAuth();
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const checkAuth = async () => {
-    try {
-      const storedAccountType = localStorage.getItem("accountType");
-      setAccountType(storedAccountType || "player");
-
-      const token = localStorage.getItem("token");
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-
-      if (storedAccountType === "organization") {
-        const response = await fetch(`${API_URL}/api/org-auth/me`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        const data = await response.json();
-        if (data.success) {
-          setUser(data.data.organization);
-        }
-      } else {
-        const response = await authAPI.getCurrentUser();
-        setUser(response.data.user);
-        setIsSiteAdmin(response.data.user.isAdmin === true);
-
-        try {
-          const adminRes = await fetch(`${API_URL}/api/org-auth/admin-org`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-          });
-          const adminData = await adminRes.json();
-          if (adminData.success) {
-            setIsOrgAdmin(true);
-            localStorage.setItem("isOrgAdmin", "true");
-            localStorage.setItem("adminOrgId", adminData.data.organization._id);
-            localStorage.setItem("adminOrgName", adminData.data.organization.organizationName);
-          } else {
-            setIsOrgAdmin(false);
-            localStorage.removeItem("isOrgAdmin");
-            localStorage.removeItem("adminOrgId");
-            localStorage.removeItem("adminOrgName");
-          }
-        } catch {
-          setIsOrgAdmin(false);
-          localStorage.removeItem("isOrgAdmin");
-          localStorage.removeItem("adminOrgId");
-          localStorage.removeItem("adminOrgName");
-        }
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
       }
-    } catch {
-      setUser(null);
-      setAccountType("");
-    }
-  };
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
-  const handleLogout = () => {
-    authAPI.logout();
-    setUser(null);
-    setAccountType("");
-    setIsOrgAdmin(false);
-    setIsSiteAdmin(false);
+  const handleLogout = async () => {
     setShowDropdown(false);
+    const ok = await confirm({
+      title: "Sign out?",
+      message: "Are you sure you want to sign out?",
+      confirmText: "Sign Out",
+      cancelText: "Cancel",
+      confirmButtonClass: "bg-[#e85d5d] hover:bg-[#d94f4f]",
+    });
+    if (!ok) return;
+    await logout();
     router.push("/");
   };
-
-  const closeMobile = () => setMobileMenuOpen(false);
 
   const navLinks = [
     { href: "/tournaments", label: t.nav.tournaments },
     { href: "/esports-data", label: t.nav.esportsData },
-    { href: "/games", label: t.nav.games },
-    { href: "/watch-now", label: t.nav.watchNow },
-    { href: "/about", label: t.nav.about },
+    { href: "/games",        label: t.nav.games },
+    { href: "/watch-now",    label: t.nav.watchNow },
+    { href: "/about",        label: t.nav.about },
   ];
 
+  const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
+
+  const displayName = accountType === "organization"
+    ? (user?.tag || user?.organizationName || user?.name || "Org")
+    : (user?.username || "…");
+
   return (
-    <header className="w-full px-4 sm:px-6 py-4 flex items-center justify-between relative z-50">
-      {/* Logo and Brand */}
-      <Link href="/" className="flex items-center gap-2 sm:gap-3">
-        <Logo width={40} height={35} />
-        <div className="font-plus-jakarta text-white text-base sm:text-lg font-medium leading-tight">
-          Esports<br />Adda
-        </div>
-      </Link>
+    <>
+    <header
+      className={`w-full sticky top-0 z-50 transition-all duration-300 ${
+        scrolled
+          ? "bg-[#111111]/90 backdrop-blur-xl border-b border-white/[0.08] shadow-[0_1px_0_rgba(255,255,255,0.04)]"
+          : "bg-transparent"
+      }`}
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-6">
 
-      {/* Desktop Navigation Links */}
-      <nav className="hidden lg:flex items-center gap-8" suppressHydrationWarning>
-        {navLinks.map((link) => (
-          <Link key={link.href} href={link.href} className="text-gray-300 hover:text-white transition-colors text-base">
-            {link.label}
-          </Link>
-        ))}
-      </nav>
-
-      {/* Right side: Language toggle + Auth + Hamburger */}
-      {mounted ? (
-        <div className="flex items-center gap-3">
-          {/* Language Toggle */}
-          <LanguageToggle />
-
-          {/* Auth Section */}
-          {user ? (
-            <div className="relative">
-              <button
-                onClick={() => setShowDropdown(!showDropdown)}
-                className="bg-transparent border-2 border-white rounded-lg px-3 sm:px-6 py-2 text-white font-plus-jakarta text-sm sm:text-base font-semibold hover:bg-white/10 transition-all flex items-center gap-2"
-              >
-                <span className="max-w-[100px] sm:max-w-none truncate">
-                  {accountType === "organization" ? (user.tag || user.name) : user.username}
-                </span>
-                <svg
-                  className={`w-4 h-4 transition-transform flex-shrink-0 ${showDropdown ? "rotate-180" : ""}`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-
-              {showDropdown && (
-                <div className="absolute right-0 mt-2 w-56 bg-[#1a1a1a] border border-white/20 rounded-lg shadow-lg overflow-hidden z-50">
-                  {accountType === "player" && (
-                    <>
-                      <Link href="/profile" onClick={() => setShowDropdown(false)} className="block px-4 py-3 text-white hover:bg-white/10 transition-colors">
-                        {t.nav.myProfile}
-                      </Link>
-                      <Link href="/team" onClick={() => setShowDropdown(false)} className="block px-4 py-3 text-white hover:bg-white/10 transition-colors">
-                        {t.nav.teamDashboard}
-                      </Link>
-                      {isOrgAdmin && (
-                        <Link href="/admin-dashboard" onClick={() => setShowDropdown(false)} className="block px-4 py-3 text-yellow-400 hover:bg-white/10 transition-colors">
-                          {t.nav.orgDashboard}
-                        </Link>
-                      )}
-                      {isSiteAdmin && (
-                        <Link href="/admin" onClick={() => setShowDropdown(false)} className="block px-4 py-3 text-red-400 hover:bg-white/10 transition-colors">
-                          {t.nav.adminPanel}
-                        </Link>
-                      )}
-                    </>
-                  )}
-                  {accountType === "organization" && (
-                    <>
-                      <Link href="/org-profile" onClick={() => setShowDropdown(false)} className="block px-4 py-3 text-white hover:bg-white/10 transition-colors">
-                        {t.nav.orgProfile}
-                      </Link>
-                      <Link href="/org-profile?tab=teams" onClick={() => setShowDropdown(false)} className="block px-4 py-3 text-white hover:bg-white/10 transition-colors">
-                        {t.nav.teamManagement}
-                      </Link>
-                      <Link href="/organizer/dashboard" onClick={() => setShowDropdown(false)} className="block px-4 py-3 text-white hover:bg-white/10 transition-colors">
-                        {t.nav.streamDashboard}
-                      </Link>
-                    </>
-                  )}
-                  <button onClick={handleLogout} className="w-full text-left px-4 py-3 text-red-400 hover:bg-white/10 transition-colors border-t border-white/10">
-                    {t.nav.signOut}
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <Link
-              href="/login"
-              className="bg-transparent border-2 border-white rounded-lg px-4 sm:px-6 py-2 text-white font-plus-jakarta text-sm sm:text-base font-semibold hover:bg-white/10 transition-all"
-            >
-              {t.nav.signIn}
-            </Link>
-          )}
-
-          {/* Notification Bell — only shown when logged in */}
-          {user && <NotificationBell />}
-
-          {/* Hamburger button — visible on mobile/tablet */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 text-white hover:bg-white/10 rounded-lg transition-all"
-            aria-label="Toggle menu"
+        {/* ── Logo ── */}
+        <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 group">
+          <Logo width={36} height={32} />
+          <span
+            className="font-['Russo_One'] text-white text-lg leading-tight tracking-wide group-hover:text-[#e85d5d] transition-colors duration-200"
           >
-            {mobileMenuOpen ? (
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            )}
-          </button>
-        </div>
-      ) : (
-        <div className="flex items-center gap-3">
-          <div className="bg-transparent border-2 border-white rounded-lg px-4 sm:px-6 py-2 text-white font-plus-jakarta text-sm sm:text-base font-semibold opacity-0">
-            Sign In
-          </div>
-        </div>
-      )}
+            Esports<br />Adda
+          </span>
+        </Link>
 
-      {/* Mobile slide-down menu */}
+        {/* ── Desktop Nav ── */}
+        <nav className="hidden lg:flex items-center gap-1" suppressHydrationWarning>
+          {navLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                isActive(link.href)
+                  ? "text-white bg-white/[0.08]"
+                  : "text-white/60 hover:text-white hover:bg-white/[0.05]"
+              }`}
+            >
+              {link.label}
+              {isActive(link.href) && (
+                <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-[#e85d5d] rounded-full" />
+              )}
+            </Link>
+          ))}
+        </nav>
+
+        {/* ── Right Side ── */}
+        {mounted ? (
+          <div className="flex items-center gap-2">
+            <LanguageToggle />
+
+            {isLoggedIn ? (
+              <>
+                <NotificationBell />
+
+                {/* User dropdown */}
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={() => setShowDropdown(!showDropdown)}
+                    aria-expanded={showDropdown}
+                    aria-haspopup="true"
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-white/15 bg-white/[0.05] hover:bg-white/[0.09] hover:border-white/25 transition-all duration-200 cursor-pointer"
+                  >
+                    {/* Avatar */}
+                    <span className="w-6 h-6 rounded-full bg-[#e85d5d]/20 border border-[#e85d5d]/40 flex items-center justify-center text-[#e85d5d] text-xs font-bold flex-shrink-0">
+                      {displayName?.[0]?.toUpperCase() ?? "?"}
+                    </span>
+                    <span className="hidden sm:block text-white text-sm font-medium max-w-[110px] truncate">
+                      {displayName}
+                    </span>
+                    <svg
+                      className={`w-3.5 h-3.5 text-white/50 flex-shrink-0 transition-transform duration-200 ${showDropdown ? "rotate-180" : ""}`}
+                      fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {showDropdown && (
+                    <div className="absolute right-0 mt-2 w-56 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-[0_16px_48px_rgba(0,0,0,0.6)] overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                      {/* Account label */}
+                      <div className="px-3 py-2.5 border-b border-white/[0.07]">
+                        <p className="text-[11px] text-white/40 uppercase tracking-widest font-semibold">
+                          {accountType === "organization" ? "Organization" : "Player"}
+                        </p>
+                        <p className="text-white text-sm font-medium truncate mt-0.5">{displayName}</p>
+                      </div>
+
+                      <div className="py-1">
+                        {accountType === "player" && (
+                          <>
+                            <DropdownLink href="/profile"          label={t.nav.myProfile}    onClick={() => setShowDropdown(false)} />
+                            <DropdownLink href="/team"             label={t.nav.teamDashboard} onClick={() => setShowDropdown(false)} />
+                            {isOrgAdmin && (
+                              <DropdownLink href="/admin-dashboard" label={t.nav.orgDashboard}  onClick={() => setShowDropdown(false)} accent="amber" />
+                            )}
+                            {isSiteAdmin && (
+                              <DropdownLink href="/admin"           label={t.nav.adminPanel}    onClick={() => setShowDropdown(false)} accent="red" />
+                            )}
+                          </>
+                        )}
+                        {accountType === "organization" && (
+                          <>
+                            <DropdownLink href="/org-profile"            label={t.nav.orgProfile}      onClick={() => setShowDropdown(false)} />
+                            <DropdownLink href="/org-profile?tab=teams"  label={t.nav.teamManagement}  onClick={() => setShowDropdown(false)} />
+                            <DropdownLink href="/organizer/dashboard"    label={t.nav.streamDashboard} onClick={() => setShowDropdown(false)} />
+                          </>
+                        )}
+                      </div>
+
+                      <div className="border-t border-white/[0.07] py-1">
+                        <button
+                          onClick={handleLogout}
+                          className="w-full text-left px-4 py-2.5 text-sm text-[#e85d5d] hover:bg-white/[0.06] transition-colors duration-150 cursor-pointer"
+                        >
+                          {t.nav.signOut}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/login"
+                  className="btn-ghost hidden sm:inline-flex items-center px-4 py-2 text-sm"
+                >
+                  {t.nav.signIn}
+                </Link>
+                <Link
+                  href="/signup"
+                  className="btn-brand inline-flex items-center px-4 py-2 text-sm"
+                >
+                  Sign Up
+                </Link>
+              </div>
+            )}
+
+            {/* Hamburger */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle menu"
+              className="lg:hidden p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/[0.07] transition-all duration-200 cursor-pointer"
+            >
+              {mobileMenuOpen ? (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              )}
+            </button>
+          </div>
+        ) : (
+          <div className="w-24 h-8 skeleton" />
+        )}
+      </div>
+
+      {/* ── Mobile Menu ── */}
       {mounted && mobileMenuOpen && (
-        <div className="absolute top-full left-0 right-0 bg-[#111111]/95 backdrop-blur-md border-b border-white/10 lg:hidden z-50">
-          <nav className="flex flex-col px-6 py-4 gap-1">
+        <div className="lg:hidden border-t border-white/[0.08] bg-[#111111]/95 backdrop-blur-xl">
+          <nav className="max-w-7xl mx-auto px-4 py-3 flex flex-col gap-0.5">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                onClick={closeMobile}
-                className="text-gray-300 hover:text-white hover:bg-white/5 transition-colors text-base py-3 px-3 rounded-lg"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm transition-all duration-200 ${
+                  isActive(link.href)
+                    ? "text-white bg-white/[0.08] font-medium"
+                    : "text-white/60 hover:text-white hover:bg-white/[0.05]"
+                }`}
               >
+                {isActive(link.href) && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#e85d5d] flex-shrink-0" />
+                )}
                 {link.label}
               </Link>
             ))}
+
+            {!isLoggedIn && (
+              <div className="flex gap-2 pt-3 mt-1 border-t border-white/[0.07]">
+                <Link href="/login"  onClick={() => setMobileMenuOpen(false)} className="btn-ghost flex-1 text-center py-2.5 text-sm">
+                  {t.nav.signIn}
+                </Link>
+                <Link href="/signup" onClick={() => setMobileMenuOpen(false)} className="btn-brand flex-1 text-center py-2.5 text-sm">
+                  Sign Up
+                </Link>
+              </div>
+            )}
           </nav>
         </div>
       )}
     </header>
+
+    {confirmState && (
+      <ConfirmDialog
+        title={confirmState.options.title}
+        message={confirmState.options.message}
+        confirmText={confirmState.options.confirmText}
+        cancelText={confirmState.options.cancelText}
+        confirmButtonClass={confirmState.options.confirmButtonClass}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+      />
+    )}
+  </>
+  );
+}
+
+/* ── Dropdown Link Helper ── */
+function DropdownLink({
+  href, label, onClick, accent,
+}: {
+  href: string; label: string; onClick: () => void; accent?: "amber" | "red";
+}) {
+  const colorClass =
+    accent === "amber" ? "text-yellow-400" :
+    accent === "red"   ? "text-[#e85d5d]"  : "text-white";
+
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className={`block px-4 py-2.5 text-sm ${colorClass} hover:bg-white/[0.06] transition-colors duration-150`}
+    >
+      {label}
+    </Link>
   );
 }

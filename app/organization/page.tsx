@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import axios from "axios";
+import api from '@/lib/api';
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ConfirmDialog from "@/components/ConfirmDialog";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 const GAMES = [
   "Valorant",
@@ -85,17 +84,14 @@ export default function OrganizationDashboardPage() {
 
   const fetchMyOrganizations = async () => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
+      const accountType = localStorage.getItem("accountType");
+      if (!accountType) {
         router.push("/login");
         return;
       }
 
-      const response = await axios.get(
-        `${API_URL}/api/organizations/my/organizations`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+      const response = await api.get(
+        `/organizations/my/organizations`
       );
 
       setOrganizations(response.data.data.organizations);
@@ -109,10 +105,7 @@ export default function OrganizationDashboardPage() {
 
   const fetchOrgDetails = async (orgId: string) => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.get(`${API_URL}/api/organizations/${orgId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.get(`/organizations/${orgId}`);
 
       setSelectedOrg(response.data.data.organization);
     } catch (error: any) {
@@ -148,10 +141,7 @@ export default function OrganizationDashboardPage() {
     setSuccess("");
 
     try {
-      const token = localStorage.getItem("token");
-      await axios.post(`${API_URL}/api/teams`, createTeamForm, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.post(`/teams`, createTeamForm);
 
       setSuccess("Team created successfully!");
       setCreateTeamForm({
@@ -184,13 +174,9 @@ export default function OrganizationDashboardPage() {
     setSuccess("");
 
     try {
-      const token = localStorage.getItem("token");
-      await axios.post(
-        `${API_URL}/api/organizations/${selectedOrg._id}/staff`,
-        staffForm,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+      await api.post(
+        `/organizations/${selectedOrg._id}/staff`,
+        staffForm
       );
 
       setSuccess("Staff member added successfully!");
@@ -210,11 +196,9 @@ export default function OrganizationDashboardPage() {
     if (!selectedOrg || !staffToRemove) return;
 
     try {
-      const token = localStorage.getItem("token");
-      await axios.delete(
-        `${API_URL}/api/organizations/${selectedOrg._id}/staff`,
+      await api.delete(
+        `/organizations/${selectedOrg._id}/staff`,
         {
-          headers: { Authorization: `Bearer ${token}` },
           data: { userId: staffToRemove },
         }
       );
@@ -236,13 +220,9 @@ export default function OrganizationDashboardPage() {
     setSuccess("");
 
     try {
-      const token = localStorage.getItem("token");
-      await axios.post(
-        `${API_URL}/api/organizations/${selectedOrg._id}/teams`,
-        teamForm,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+      await api.post(
+        `/organizations/${selectedOrg._id}/teams`,
+        teamForm
       );
 
       setSuccess("Team added successfully!");
@@ -262,10 +242,7 @@ export default function OrganizationDashboardPage() {
     if (!orgToDelete) return;
 
     try {
-      const token = localStorage.getItem("token");
-      await axios.delete(`${API_URL}/api/organizations/${orgToDelete}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.delete(`/organizations/${orgToDelete}`);
 
       setSuccess("Organization deleted successfully!");
       setShowDeleteOrgModal(false);
@@ -279,14 +256,14 @@ export default function OrganizationDashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415] flex items-center justify-center">
+      <div className="min-h-screen bg-[#0d0d0d] bg-gradient-to-b from-[#111111] to-[#110a0a] flex items-center justify-center">
         <div className="text-white text-xl">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415]">
+    <div className="min-h-screen bg-[#0d0d0d] bg-gradient-to-b from-[#111111] to-[#110a0a]">
       <Header />
       <div className="max-w-7xl mx-auto py-12 px-4">
         {/* Header */}

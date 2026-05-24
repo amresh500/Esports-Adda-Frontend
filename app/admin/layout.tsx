@@ -28,9 +28,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const verifyAdmin = async () => {
     try {
-      const token = localStorage.getItem("token");
       const accountType = localStorage.getItem("accountType");
-      if (!token || accountType !== "player") {
+      if (!accountType || accountType !== "player") {
         router.push("/");
         return;
       }
@@ -51,7 +50,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415] flex items-center justify-center">
+      <div className="min-h-screen bg-[#0d0d0d] bg-gradient-to-b from-[#111111] to-[#110a0a] flex items-center justify-center">
         <div className="text-white text-lg">Verifying admin access...</div>
       </div>
     );
@@ -60,7 +59,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (!authorized) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415] flex">
+    <div className="min-h-screen bg-[#0d0d0d] bg-gradient-to-b from-[#111111] to-[#110a0a] flex">
       {/* Sidebar */}
       <aside className="w-64 bg-black/40 backdrop-blur-md border-r border-white/10 flex flex-col">
         <div className="p-6 border-b border-white/10">

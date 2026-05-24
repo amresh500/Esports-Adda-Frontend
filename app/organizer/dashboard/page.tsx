@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import { authAPI } from "@/lib/api";
-import axios from "axios";
+import api from '@/lib/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -58,9 +57,8 @@ export default function OrganizerDashboard() {
   const checkAuth = async () => {
     try {
       const accountType = localStorage.getItem("accountType");
-      const token = localStorage.getItem("token");
 
-      if (!token) {
+      if (!accountType) {
         router.push("/login");
         return;
       }
@@ -68,8 +66,8 @@ export default function OrganizerDashboard() {
       // Organizations should access this dashboard
       if (accountType === "organization") {
         const response = await fetch(`${API_URL}/api/org-auth/me`, {
+          credentials: 'include',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         });
@@ -90,10 +88,7 @@ export default function OrganizerDashboard() {
 
   const fetchMyStreams = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.get(`${API_URL}/api/streams/my/streams`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.get(`/streams/my/streams`);
       setStreams(response.data.data.streams);
     } catch (error) {
       console.error("Failed to fetch streams:", error);
@@ -104,10 +99,7 @@ export default function OrganizerDashboard() {
 
   const fetchMyTournaments = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.get(`${API_URL}/api/tournaments/my/tournaments`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.get(`/tournaments/my/tournaments`);
       setTournaments(response.data.data.tournaments || []);
     } catch (error) {
       console.error("Failed to fetch tournaments:", error);
@@ -134,7 +126,6 @@ export default function OrganizerDashboard() {
     setSuccess("");
 
     try {
-      const token = localStorage.getItem("token");
 
       // Validate YouTube URL
       if (
@@ -146,9 +137,7 @@ export default function OrganizerDashboard() {
         return;
       }
 
-      await axios.post(`${API_URL}/api/streams`, formData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.post(`/streams`, formData);
 
       setSuccess(
         "Stream added successfully! It will be visible after admin approval."
@@ -183,10 +172,7 @@ export default function OrganizerDashboard() {
     if (!streamToDelete) return;
 
     try {
-      const token = localStorage.getItem("token");
-      await axios.delete(`${API_URL}/api/streams/${streamToDelete}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.delete(`/streams/${streamToDelete}`);
       setSuccess("Stream deleted successfully");
       setShowDeleteStreamModal(false);
       setStreamToDelete(null);
@@ -233,29 +219,29 @@ export default function OrganizerDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415] flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#110a0a] flex items-center justify-center">
         <div className="text-white text-xl">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#441415]">
+    <div className="min-h-screen bg-gradient-to-b from-[#111111] to-[#110a0a]">
       <Header />
 
       <div className="px-4 sm:px-8 lg:px-20 py-6 sm:py-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
           <div>
-            <h1 className="font-plus-jakarta text-2xl sm:text-4xl text-white mb-2">
+            <h1 className="font-['Russo_One'] text-2xl sm:text-4xl text-white mb-2">
               Organizer Dashboard
             </h1>
-            <p className="font-plus-jakarta text-sm sm:text-lg text-white/70">
+            <p className="font-['Russo_One'] text-sm sm:text-lg text-white/70">
               Welcome back, {user?.username}! Manage your tournament streams
             </p>
           </div>
           <button
             onClick={() => setShowAddForm(!showAddForm)}
-            className="px-4 sm:px-6 py-2.5 sm:py-3 bg-[#e85d5d] hover:bg-[#d64d4d] rounded-lg text-white font-arial text-sm sm:text-base transition-all self-start sm:self-auto"
+            className="px-4 sm:px-6 py-2.5 sm:py-3 bg-[#e85d5d] hover:bg-[#d64d4d] rounded-lg text-white font-body text-sm sm:text-base transition-all self-start sm:self-auto"
           >
             {showAddForm ? "Cancel" : "+ Add New Stream"}
           </button>
@@ -276,13 +262,13 @@ export default function OrganizerDashboard() {
         {/* Add Stream Form */}
         {showAddForm && (
           <div className="mb-8 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/20 p-6">
-            <h2 className="font-plus-jakarta text-2xl text-white mb-6">
+            <h2 className="font-['Russo_One'] text-2xl text-white mb-6">
               Add New Stream
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-white/70 text-sm font-arial mb-2">
+                  <label className="block text-white/70 text-sm font-body mb-2">
                     Stream Title *
                   </label>
                   <input
@@ -291,13 +277,13 @@ export default function OrganizerDashboard() {
                     value={formData.title}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 text-white font-arial placeholder-gray-400 focus:outline-none focus:border-white/40"
+                    className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 text-white font-body placeholder-gray-400 focus:outline-none focus:border-white/40"
                     placeholder="e.g., Nepal Valorant Championship - Finals"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-white/70 text-sm font-arial mb-2">
+                  <label className="block text-white/70 text-sm font-body mb-2">
                     YouTube URL *
                   </label>
                   <input
@@ -306,13 +292,13 @@ export default function OrganizerDashboard() {
                     value={formData.youtubeUrl}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 text-white font-arial placeholder-gray-400 focus:outline-none focus:border-white/40"
+                    className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 text-white font-body placeholder-gray-400 focus:outline-none focus:border-white/40"
                     placeholder="https://www.youtube.com/watch?v=..."
                   />
                 </div>
 
                 <div>
-                  <label className="block text-white/70 text-sm font-arial mb-2">
+                  <label className="block text-white/70 text-sm font-body mb-2">
                     Game *
                   </label>
                   <select
@@ -320,7 +306,7 @@ export default function OrganizerDashboard() {
                     value={formData.game}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 text-white font-arial focus:outline-none focus:border-white/40"
+                    className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 text-white font-body focus:outline-none focus:border-white/40"
                   >
                     {games.map((game) => (
                       <option key={game} value={game}>
@@ -331,7 +317,7 @@ export default function OrganizerDashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-white/70 text-sm font-arial mb-2">
+                  <label className="block text-white/70 text-sm font-body mb-2">
                     Tournament *
                   </label>
                   <select
@@ -339,7 +325,7 @@ export default function OrganizerDashboard() {
                     value={formData.tournament}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 text-white font-arial focus:outline-none focus:border-white/40 [&>option]:bg-gray-900 [&>option]:text-white"
+                    className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 text-white font-body focus:outline-none focus:border-white/40 [&>option]:bg-gray-900 [&>option]:text-white"
                   >
                     <option value="">Select a tournament</option>
                     {tournaments.map((t: any) => (
@@ -356,7 +342,7 @@ export default function OrganizerDashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-white/70 text-sm font-arial mb-2">
+                  <label className="block text-white/70 text-sm font-body mb-2">
                     Start Time *
                   </label>
                   <input
@@ -365,12 +351,12 @@ export default function OrganizerDashboard() {
                     value={formData.startTime}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 text-white font-arial focus:outline-none focus:border-white/40"
+                    className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 text-white font-body focus:outline-none focus:border-white/40"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-white/70 text-sm font-arial mb-2">
+                  <label className="block text-white/70 text-sm font-body mb-2">
                     End Time (Optional)
                   </label>
                   <input
@@ -378,13 +364,13 @@ export default function OrganizerDashboard() {
                     name="endTime"
                     value={formData.endTime}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 text-white font-arial focus:outline-none focus:border-white/40"
+                    className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 text-white font-body focus:outline-none focus:border-white/40"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-white/70 text-sm font-arial mb-2">
+                <label className="block text-white/70 text-sm font-body mb-2">
                   Description
                 </label>
                 <textarea
@@ -392,7 +378,7 @@ export default function OrganizerDashboard() {
                   value={formData.description}
                   onChange={handleInputChange}
                   rows={3}
-                  className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 text-white font-arial placeholder-gray-400 focus:outline-none focus:border-white/40"
+                  className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 text-white font-body placeholder-gray-400 focus:outline-none focus:border-white/40"
                   placeholder="Add details about your tournament stream..."
                 />
               </div>
@@ -406,7 +392,7 @@ export default function OrganizerDashboard() {
                   onChange={handleInputChange}
                   className="w-4 h-4"
                 />
-                <label htmlFor="isNepal" className="text-white/70 text-sm font-arial">
+                <label htmlFor="isNepal" className="text-white/70 text-sm font-body">
                   This is a Nepal tournament 🇳🇵
                 </label>
               </div>
@@ -415,14 +401,14 @@ export default function OrganizerDashboard() {
                 <button
                   type="submit"
                   disabled={formLoading}
-                  className="px-6 py-3 bg-[#e85d5d] hover:bg-[#d64d4d] rounded-lg text-white font-arial text-base transition-all disabled:opacity-50"
+                  className="px-6 py-3 bg-[#e85d5d] hover:bg-[#d64d4d] rounded-lg text-white font-body text-base transition-all disabled:opacity-50"
                 >
                   {formLoading ? "Adding..." : "Add Stream"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowAddForm(false)}
-                  className="px-6 py-3 bg-white/10 hover:bg-white/15 rounded-lg text-white font-arial text-base transition-all"
+                  className="px-6 py-3 bg-white/10 hover:bg-white/15 rounded-lg text-white font-body text-base transition-all"
                 >
                   Cancel
                 </button>
@@ -433,18 +419,18 @@ export default function OrganizerDashboard() {
 
         {/* Streams List */}
         <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/20 p-6">
-          <h2 className="font-plus-jakarta text-2xl text-white mb-6">
+          <h2 className="font-['Russo_One'] text-2xl text-white mb-6">
             My Streams ({streams.length})
           </h2>
 
           {streams.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-white/70 font-arial text-lg mb-4">
+              <p className="text-white/70 font-body text-lg mb-4">
                 You haven't added any streams yet
               </p>
               <button
                 onClick={() => setShowAddForm(true)}
-                className="px-6 py-3 bg-[#e85d5d] hover:bg-[#d64d4d] rounded-lg text-white font-arial text-base transition-all"
+                className="px-6 py-3 bg-[#e85d5d] hover:bg-[#d64d4d] rounded-lg text-white font-body text-base transition-all"
               >
                 Add Your First Stream
               </button>
@@ -458,7 +444,7 @@ export default function OrganizerDashboard() {
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
-                      <h3 className="font-arial text-xl text-white mb-2">
+                      <h3 className="font-body text-xl text-white mb-2">
                         {stream.title}
                       </h3>
                       <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -471,7 +457,7 @@ export default function OrganizerDashboard() {
                     </div>
                     <button
                       onClick={() => openDeleteStreamModal(stream._id)}
-                      className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 rounded-lg text-red-400 font-arial text-sm transition-all"
+                      className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 rounded-lg text-red-400 font-body text-sm transition-all"
                     >
                       Delete
                     </button>
