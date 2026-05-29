@@ -8,6 +8,38 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useLanguage } from "@/lib/LanguageContext";
 
+// Strict password policy — keep in sync with backend src/utils/passwordPolicy.js
+const PASSWORD_RULES = [
+  { label: "At least 8 characters", test: (p: string) => p.length >= 8 },
+  { label: "One uppercase letter", test: (p: string) => /[A-Z]/.test(p) },
+  { label: "One lowercase letter", test: (p: string) => /[a-z]/.test(p) },
+  { label: "One number", test: (p: string) => /[0-9]/.test(p) },
+  { label: "One special character", test: (p: string) => /[^A-Za-z0-9]/.test(p) },
+];
+
+function isPasswordStrong(password: string) {
+  return PASSWORD_RULES.every((r) => r.test(password));
+}
+
+function PasswordChecklist({ password }: { password: string }) {
+  if (!password) return null;
+  return (
+    <ul className="mt-2 space-y-1">
+      {PASSWORD_RULES.map((rule) => {
+        const ok = rule.test(password);
+        return (
+          <li
+            key={rule.label}
+            className={`text-xs ${ok ? "text-green-400" : "text-gray-400"}`}
+          >
+            {ok ? "✓" : "•"} {rule.label}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 export default function OrganizationSignup() {
   const { t } = useLanguage();
   const router = useRouter();
@@ -46,8 +78,8 @@ export default function OrganizationSignup() {
       return;
     }
 
-    if (formData.password.length < 8) {
-      setError("Password must be at least 8 characters");
+    if (!isPasswordStrong(formData.password)) {
+      setError("Password must be 8+ characters with uppercase, lowercase, a number, and a special character");
       return;
     }
 
@@ -178,6 +210,7 @@ export default function OrganizationSignup() {
                 minLength={8}
                 required
               />
+              <PasswordChecklist password={formData.password} />
             </div>
 
             {/* Confirm Password */}

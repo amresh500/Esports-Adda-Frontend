@@ -27,6 +27,23 @@ export const authAPI = {
     const response = await api.post('/auth/signup', data);
     return response.data;
   },
+  checkAvailability: async (params: { username?: string; email?: string }) => {
+    const response = await api.get('/auth/check-availability', { params });
+    return response.data;
+  },
+
+  forgotPassword: async (email: string) => {
+    const response = await api.post('/auth/forgot-password', { email });
+    return response.data;
+  },
+  verifyResetOTP: async (email: string, otp: string) => {
+    const response = await api.post('/auth/verify-reset-otp', { email, otp });
+    return response.data;
+  },
+  resetPassword: async (email: string, otp: string, newPassword: string) => {
+    const response = await api.post('/auth/reset-password', { email, otp, newPassword });
+    return response.data;
+  },
 
   login: async (data: { email: string; password: string; rememberMe?: boolean }) => {
     const response = await api.post('/auth/login', data);

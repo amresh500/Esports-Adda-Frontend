@@ -13,7 +13,7 @@ import ApexLegends from "@/components/icons/apexlegend";
 import CallOfDuty from "@/components/icons/callofduty";
 import RainbowSixSiege from "@/components/icons/rainbbowsixsiege";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import api, { authAPI } from "@/lib/api";
 import { useRouter } from "next/navigation";
@@ -74,6 +74,70 @@ const RANK_OPTIONS: { [key: string]: string[] } = {
   Other: ["Unranked", "Bronze", "Silver", "Gold", "Platinum", "Diamond", "Master", "Challenger"],
 };
 
+// Debounced availability check. Returns: null (idle), "checking", true (free), false (taken)
+type AvailStatus = null | "checking" | boolean;
+function useAvailability(field: "username" | "email", value: string, minLen = 3) {
+  const [status, setStatus] = useState<AvailStatus>(null);
+  useEffect(() => {
+    const v = value.trim();
+    if (v.length < minLen) {
+      setStatus(null);
+      return;
+    }
+    setStatus("checking");
+    const timer = setTimeout(async () => {
+      try {
+        const res = await authAPI.checkAvailability({ [field]: v });
+        setStatus(res?.data?.[field]?.available ?? null);
+      } catch {
+        setStatus(null);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [field, value, minLen]);
+  return status;
+}
+
+function AvailabilityHint({ status, label }: { status: AvailStatus; label: string }) {
+  if (status === null) return null;
+  if (status === "checking")
+    return <p className="text-white/60 text-sm -mt-3">Checking {label}...</p>;
+  if (status === true)
+    return <p className="text-green-400 text-sm -mt-3">&#10003; {label} is available</p>;
+  return <p className="text-red-400 text-sm -mt-3">&#10007; {label} is already taken</p>;
+}
+
+// Strict password policy — keep in sync with backend src/utils/passwordPolicy.js
+const PASSWORD_RULES = [
+  { label: "At least 8 characters", test: (p: string) => p.length >= 8 },
+  { label: "One uppercase letter", test: (p: string) => /[A-Z]/.test(p) },
+  { label: "One lowercase letter", test: (p: string) => /[a-z]/.test(p) },
+  { label: "One number", test: (p: string) => /[0-9]/.test(p) },
+  { label: "One special character", test: (p: string) => /[^A-Za-z0-9]/.test(p) },
+];
+
+function isPasswordStrong(password: string) {
+  return PASSWORD_RULES.every((r) => r.test(password));
+}
+
+function PasswordChecklist({ password }: { password: string }) {
+  return (
+    <ul className="-mt-3 space-y-1">
+      {PASSWORD_RULES.map((rule) => {
+        const ok = rule.test(password);
+        return (
+          <li
+            key={rule.label}
+            className={`text-sm transition-colors ${ok ? "text-green-400" : "text-white/50"}`}
+          >
+            {ok ? "✓" : "•"} {rule.label}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 const SignUpPage = () => {
   const { t } = useLanguage();
   const router = useRouter();
@@ -113,6 +177,11 @@ const SignUpPage = () => {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Live availability checks (debounced) for the basic-info step
+  const emailStatus = useAvailability("email", email, 5);
+  const usernameStatus = useAvailability("username", username);
+  const orgNameStatus = useAvailability("username", organizationName);
+
   const handleNextStep = () => {
     setError("");
 
@@ -144,8 +213,20 @@ const SignUpPage = () => {
         setError("Passwords do not match");
         return;
       }
-      if (password.length < 8) {
-        setError("Password must be at least 8 characters long");
+      if (!isPasswordStrong(password)) {
+        setError("Password must be 8+ characters with uppercase, lowercase, a number, and a special character");
+        return;
+      }
+      if (emailStatus === false) {
+        setError("That email is already registered");
+        return;
+      }
+      if (accountType === "player" && usernameStatus === false) {
+        setError("That username is already taken");
+        return;
+      }
+      if (accountType === "organization" && orgNameStatus === false) {
+        setError("That organization name is already taken");
         return;
       }
       setStep(2);
@@ -376,7 +457,7 @@ const SignUpPage = () => {
                       : "bg-white/5 border-white/20 hover:border-white/40"
                   }`}
                 >
-                  <div className="text-4xl mb-3">🎮</div>
+                  <div className="text-4xl mb-3">&#127918;</div>
                   <h3 className="text-white font-bold text-xl mb-2">Player Account</h3>
                   <p className="text-white/70 text-sm">
                     For individual gamers who want to showcase their skills, join teams, and participate in tournaments
@@ -391,7 +472,7 @@ const SignUpPage = () => {
                       : "bg-white/5 border-white/20 hover:border-white/40"
                   }`}
                 >
-                  <div className="text-4xl mb-3">🏢</div>
+                  <div className="text-4xl mb-3">&#127970;</div>
                   <h3 className="text-white font-bold text-xl mb-2">Organization Account</h3>
                   <p className="text-white/70 text-sm">
                     For esports organizations managing multiple teams, staff, and tournament streams
@@ -454,15 +535,19 @@ const SignUpPage = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-3.5 py-4 bg-white border border-gray-300 rounded-lg shadow-[0_1px_2px_rgba(16,24,40,0.05)] text-gray-500 font-inter text-base placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/30"
               />
+              <AvailabilityHint status={emailStatus} label="Email" />
 
               {accountType === "player" ? (
-                <input
+                <>
+                  <input
                   type="text"
                   placeholder={t.auth.usernameLabel}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="w-full px-3.5 py-4 bg-white border border-gray-300 rounded-lg shadow-[0_1px_2px_rgba(16,24,40,0.05)] text-gray-500 font-inter text-base placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/30"
                 />
+                  <AvailabilityHint status={usernameStatus} label="Username" />
+                </>
               ) : (
                 <>
                   <input
@@ -472,6 +557,7 @@ const SignUpPage = () => {
                     onChange={(e) => setOrganizationName(e.target.value)}
                     className="w-full px-3.5 py-4 bg-white border border-gray-300 rounded-lg shadow-[0_1px_2px_rgba(16,24,40,0.05)] text-gray-500 font-inter text-base placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/30"
                   />
+                  <AvailabilityHint status={orgNameStatus} label="Organization name" />
                   <input
                     type="text"
                     placeholder="Organization Tag (e.g., TSM, FNC)"
@@ -497,9 +583,11 @@ const SignUpPage = () => {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                 >
-                  {showPassword ? "🙈" : "👁️"}
+                  {showPassword ? "Hide" : "Show"}
                 </button>
               </div>
+
+              <PasswordChecklist password={password} />
 
               <div className="relative">
                 <input
@@ -514,7 +602,7 @@ const SignUpPage = () => {
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                 >
-                  {showConfirmPassword ? "🙈" : "👁️"}
+                  {showConfirmPassword ? "Hide" : "Show"}
                 </button>
               </div>
 
