@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Logo from "@/components/icons/logo";
 import { authAPI } from "@/lib/api";
 
-export default function VerifyEmailChangePage() {
+function VerifyEmailChangeInner() {
   const params = useSearchParams();
   const router = useRouter();
   const token = params.get("token");
@@ -68,5 +68,19 @@ export default function VerifyEmailChangePage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function VerifyEmailChangePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen w-full bg-primary-gradient flex items-center justify-center p-4">
+          <div className="text-white/70 text-sm">Loading...</div>
+        </div>
+      }
+    >
+      <VerifyEmailChangeInner />
+    </Suspense>
   );
 }
