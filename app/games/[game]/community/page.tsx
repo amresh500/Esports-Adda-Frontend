@@ -73,11 +73,16 @@ export default function CommunityHubPage() {
   // Auto-scroll chat panel to bottom
   const chatEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
 
   useEffect(() => {
-    if (autoScroll && chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: "smooth" });
+    // Scroll ONLY the chat panel, not the whole page. scrollIntoView() walks up
+    // and scrolls every scrollable ancestor (including <body>), which yanks the
+    // entire page. Setting scrollTop on the container keeps the scroll local.
+    if (autoScroll && chatContainerRef.current) {
+      const el = chatContainerRef.current;
+      el.scrollTop = el.scrollHeight;
     }
   }, [chatMessages, autoScroll]);
 
@@ -94,6 +99,8 @@ export default function CommunityHubPage() {
     setSendError(null);
     setIsSending(true);
     setInputValue("");
+    // Reset the auto-grown textarea back to one row so layout doesn't shift
+    if (textareaRef.current) textareaRef.current.style.height = "auto";
     emitStopTyping();
 
     try {
@@ -385,6 +392,7 @@ export default function CommunityHubPage() {
             {isLoggedIn ? (
               <div className="flex gap-3 items-end">
                 <textarea
+                  ref={textareaRef}
                   value={inputValue}
                   onChange={handleInputChange}
                   onKeyDown={handleKeyDown}
