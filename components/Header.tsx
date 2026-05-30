@@ -170,6 +170,7 @@ export default function Header() {
                             <DropdownLink href="/organizer/dashboard"    label={t.nav.streamDashboard} onClick={() => setShowDropdown(false)} />
                           </>
                         )}
+                        <DropdownLink href="/settings" label="Settings" onClick={() => setShowDropdown(false)} />
                       </div>
 
                       <div className="border-t border-white/[0.07] py-1">

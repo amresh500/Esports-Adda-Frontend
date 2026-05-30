@@ -81,6 +81,28 @@ export const authAPI = {
     const response = await api.get(`/auth/verify-email/${token}`);
     return response.data;
   },
+
+  // Account settings
+  changePassword: async (currentPassword: string, newPassword: string) => {
+    const response = await api.post('/auth/change-password', { currentPassword, newPassword });
+    return response.data;
+  },
+  changeEmail: async (newEmail: string, currentPassword: string) => {
+    const response = await api.post('/auth/change-email', { newEmail, currentPassword });
+    return response.data;
+  },
+  verifyEmailChange: async (token: string) => {
+    const response = await api.get(`/auth/verify-email-change/${token}`);
+    return response.data;
+  },
+  deleteAccount: async (currentPassword: string) => {
+    const response = await api.post('/auth/delete-account', { currentPassword });
+    return response.data;
+  },
+  restoreAccount: async (email: string, password: string) => {
+    const response = await api.post('/auth/restore-account', { email, password });
+    return response.data;
+  },
 };
 
 export default api;

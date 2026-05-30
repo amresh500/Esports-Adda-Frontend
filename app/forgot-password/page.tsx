@@ -243,7 +243,7 @@ const ForgotPasswordPage = () => {
                       value={digit}
                       onChange={(e) => handleOtpChange(index, e.target.value)}
                       onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                      className="w-12 h-14 text-center text-2xl font-bold bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-12 h-14 text-center text-2xl font-bold text-gray-900 bg-white border border-gray-300 rounded-lg caret-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   ))}
                 </div>
