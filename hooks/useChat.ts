@@ -73,7 +73,8 @@ export function useChat(game: string | null): UseChatReturn {
     setIsLoading(true);
     try {
       const res = await fetch(
-        `${API_URL}/api/chat/${encodeURIComponent(gameName)}?limit=50`
+        `${API_URL}/api/chat/${encodeURIComponent(gameName)}?limit=50`,
+        { credentials: "include" } // send the httpOnly login cookie — route requires auth
       );
       const data = await res.json();
       if (data.success) {
@@ -96,7 +97,8 @@ export function useChat(game: string | null): UseChatReturn {
     setIsLoading(true);
     try {
       const res = await fetch(
-        `${API_URL}/api/chat/${encodeURIComponent(game)}?limit=50&cursor=${nextCursor}`
+        `${API_URL}/api/chat/${encodeURIComponent(game)}?limit=50&cursor=${nextCursor}`,
+        { credentials: "include" } // send the httpOnly login cookie — route requires auth
       );
       const data = await res.json();
       if (data.success) {
@@ -123,6 +125,7 @@ export function useChat(game: string | null): UseChatReturn {
 
     const socket = io(API_URL, {
       auth: token ? { token } : {},
+      withCredentials: true, // also send the httpOnly cookie so the server can auth via cookie if sessionStorage token is missing/stale
       transports: ["websocket", "polling"],
     });
 
@@ -134,6 +137,12 @@ export function useChat(game: string | null): UseChatReturn {
     });
 
     socket.on("disconnect", () => {
+      setIsConnected(false);
+    });
+
+    // Surface auth/connection failures instead of silently showing an empty chat
+    socket.on("connect_error", (err) => {
+      console.error("Chat socket connection failed:", err.message);
       setIsConnected(false);
     });
 
