@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import api from '@/lib/api';
+import { toServerISO } from '@/lib/datetime';
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -191,7 +192,17 @@ function OrganizationProfileInner() {
     e.preventDefault();
     setSavingTournament(true);
     try {
-      await api.post(`/tournaments`, tournamentForm);
+      // datetime-local inputs are naive (no timezone). Convert to UTC in the
+      // user's local zone before sending so the server (UTC) doesn't shift the
+      // time by Nepal's +5:45 offset. See lib/datetime.ts.
+      const payload = {
+        ...tournamentForm,
+        registrationStartDate: toServerISO(tournamentForm.registrationStartDate),
+        registrationEndDate: toServerISO(tournamentForm.registrationEndDate),
+        tournamentStartDate: toServerISO(tournamentForm.tournamentStartDate),
+        tournamentEndDate: toServerISO(tournamentForm.tournamentEndDate),
+      };
+      await api.post(`/tournaments`, payload);
       showSuccess("Tournament created!");
       setShowCreateTournamentForm(false);
       setTournamentForm({

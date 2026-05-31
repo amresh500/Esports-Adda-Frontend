@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { createPortal } from 'react-dom';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import api from '@/lib/api';
+import { toServerISO, toDatetimeLocal, formatNepal } from '@/lib/datetime';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ConfirmDialog from '@/components/ConfirmDialog';
@@ -373,11 +374,13 @@ function TournamentManagePageInner() {
   };
 
   const openDatesModal = () => {
+    // Pre-fill the datetime-local inputs in the user's LOCAL (Nepal) zone, not UTC,
+    // so the times shown match what was originally entered. See lib/datetime.ts.
     setDatesForm({
-      registrationStartDate: tournament?.registrationStartDate ? new Date(tournament.registrationStartDate).toISOString().slice(0, 16) : '',
-      registrationEndDate:   tournament?.registrationEndDate   ? new Date(tournament.registrationEndDate).toISOString().slice(0, 16) : '',
-      tournamentStartDate:   tournament?.tournamentStartDate   ? new Date(tournament.tournamentStartDate).toISOString().slice(0, 16) : '',
-      tournamentEndDate:     tournament?.tournamentEndDate     ? new Date(tournament.tournamentEndDate).toISOString().slice(0, 16) : '',
+      registrationStartDate: toDatetimeLocal(tournament?.registrationStartDate),
+      registrationEndDate:   toDatetimeLocal(tournament?.registrationEndDate),
+      tournamentStartDate:   toDatetimeLocal(tournament?.tournamentStartDate),
+      tournamentEndDate:     toDatetimeLocal(tournament?.tournamentEndDate),
     });
     setShowDatesModal(true);
   };
@@ -385,7 +388,14 @@ function TournamentManagePageInner() {
   const handleUpdateDates = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.patch(`/tournaments/${tournamentId}/registration-dates`, datesForm);
+      // Convert local input values back to UTC ISO before sending (mirror of the pre-fill).
+      const payload = {
+        registrationStartDate: toServerISO(datesForm.registrationStartDate),
+        registrationEndDate:   toServerISO(datesForm.registrationEndDate),
+        tournamentStartDate:   toServerISO(datesForm.tournamentStartDate),
+        tournamentEndDate:     toServerISO(datesForm.tournamentEndDate),
+      };
+      await api.patch(`/tournaments/${tournamentId}/registration-dates`, payload);
       setSuccess('Tournament dates updated successfully!');
       setShowDatesModal(false);
       fetchTournamentDetails();
@@ -631,21 +641,21 @@ function TournamentManagePageInner() {
               </div>
               <div>
                 <p className="text-white/30 text-[10px] uppercase tracking-widest mb-1.5">Reg. Start</p>
-                <p className="text-white/80 text-sm">{tournament?.registrationStartDate ? new Date(tournament.registrationStartDate).toLocaleString() : '—'}</p>
+                <p className="text-white/80 text-sm">{formatNepal(tournament?.registrationStartDate)}</p>
               </div>
               <div>
                 <p className="text-white/30 text-[10px] uppercase tracking-widest mb-1.5">Reg. End</p>
-                <p className="text-white/80 text-sm">{tournament?.registrationEndDate ? new Date(tournament.registrationEndDate).toLocaleString() : '—'}</p>
+                <p className="text-white/80 text-sm">{formatNepal(tournament?.registrationEndDate)}</p>
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-white/[0.05]">
               <div>
                 <p className="text-white/30 text-[10px] uppercase tracking-widest mb-1.5">Tournament Start</p>
-                <p className="text-white/80 text-sm">{tournament?.tournamentStartDate ? new Date(tournament.tournamentStartDate).toLocaleString() : '—'}</p>
+                <p className="text-white/80 text-sm">{formatNepal(tournament?.tournamentStartDate)}</p>
               </div>
               <div>
                 <p className="text-white/30 text-[10px] uppercase tracking-widest mb-1.5">Tournament End</p>
-                <p className="text-white/80 text-sm">{tournament?.tournamentEndDate ? new Date(tournament.tournamentEndDate).toLocaleString() : '—'}</p>
+                <p className="text-white/80 text-sm">{formatNepal(tournament?.tournamentEndDate)}</p>
               </div>
             </div>
             <p className="text-white/25 text-xs mt-4">

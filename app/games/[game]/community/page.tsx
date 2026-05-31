@@ -5,7 +5,9 @@ import { useParams, useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ChatMessage from "@/components/ChatMessage";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { useChat } from "@/hooks/useChat";
+import { useConfirm } from "@/hooks/useConfirm";
 
 const VALID_GAMES = [
   "Valorant",
@@ -63,6 +65,9 @@ export default function CommunityHubPage() {
   // Split messages into two lists
   const announcements = messages.filter((m) => m.messageType === "announcement");
   const chatMessages = messages.filter((m) => m.messageType === "message");
+
+  // Confirmation dialog (replaces the native window.confirm for deletes)
+  const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm();
 
   // Chat input state
   const [inputValue, setInputValue] = useState("");
@@ -132,7 +137,14 @@ export default function CommunityHubPage() {
   };
 
   const handleDelete = async (messageId: string) => {
-    if (!confirm("Delete this message?")) return;
+    const ok = await confirm({
+      title: "Delete message?",
+      message: "This message will be removed for everyone. This action cannot be undone.",
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      confirmButtonClass: "bg-red-500 hover:bg-red-600",
+    });
+    if (!ok) return;
     try { await deleteMessage(messageId); }
     catch (err: any) { alert(err.message || "Failed to delete"); }
   };
@@ -442,6 +454,19 @@ export default function CommunityHubPage() {
           </div>
         </div>
       </div>
+
+      {/* Delete confirmation dialog */}
+      {confirmState && (
+        <ConfirmDialog
+          title={confirmState.options.title}
+          message={confirmState.options.message}
+          confirmText={confirmState.options.confirmText}
+          cancelText={confirmState.options.cancelText}
+          confirmButtonClass={confirmState.options.confirmButtonClass}
+          onConfirm={handleConfirm}
+          onCancel={handleCancel}
+        />
+      )}
 
       <Footer />
     </div>

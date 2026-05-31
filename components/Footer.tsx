@@ -19,8 +19,8 @@ export default function Footer() {
 
   const legalLinks = [
     { href: "/about",    label: "About" },
-    { href: "/about",    label: "Privacy" },
-    { href: "/about",    label: "Terms" },
+    { href: "/privacy",  label: "Privacy" },
+    { href: "/terms",    label: "Terms" },
   ];
 
   return (
@@ -159,7 +159,7 @@ export default function Footer() {
         {/* ── Bottom bar ── */}
         <div className="border-t border-white/[0.07] py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-white/30 text-xs">
-            © 2025 Esports Adda. {t.footer.rights}
+            © 2026 Esports Adda. {t.footer.rights}
           </p>
           <div className="flex items-center gap-4">
             {legalLinks.map((link) => (
