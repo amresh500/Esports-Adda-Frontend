@@ -343,14 +343,14 @@ export default function Home() {
 
   /* What-we-offer items */
   const offerItems = [
-    { icon: "🏆", label: "Tournament Hosting",  sub: "Create & manage brackets" },
-    { icon: "👤", label: "Player Profiles",      sub: "Stats, history, achievements" },
-    { icon: "🤝", label: "Team Management",      sub: "Roster, roles & invites" },
-    { icon: "🏢", label: "Org Dashboard",        sub: "Run your esports org" },
-    { icon: "📊", label: "Esports Analytics",    sub: "Live data & standings" },
-    { icon: "🔔", label: "Live Notifications",   sub: "Match alerts in real-time" },
-    { icon: "🎮", label: "11+ Games Supported",  sub: "From Valorant to Free Fire" },
-    { icon: "🇳🇵", label: "Nepal Community",      sub: "Built for NP esports" },
+    { icon: "", label: "Tournament Hosting",  sub: "Create & manage brackets" },
+    { icon: "", label: "Player Profiles",      sub: "Stats, history, achievements" },
+    { icon: "", label: "Team Management",      sub: "Roster, roles & invites" },
+    { icon: "", label: "Org Dashboard",        sub: "Run your esports org" },
+    { icon: "", label: "Esports Analytics",    sub: "Live data & standings" },
+    { icon: "", label: "Live Notifications",   sub: "Match alerts in real-time" },
+    { icon: "", label: "11+ Games Supported",  sub: "From Valorant to Free Fire" },
+    { icon: "", label: "Nepal Community",      sub: "Built for NP esports" },
   ];
 
   return (
@@ -563,9 +563,9 @@ export default function Home() {
                 {heroVisible && (
                   <div className="hero-sub flex flex-wrap gap-5 mt-10" style={{ animationDelay: "600ms" }}>
                     {[
-                      { icon: "🎮", text: "11+ Supported Games" },
-                      { icon: "🏆", text: "Live Tournaments" },
-                      { icon: "🇳🇵", text: "Nepal Community" },
+                      { icon: "", text: "11+ Supported Games" },
+                      { icon: "", text: "Live Tournaments" },
+                      { icon: "", text: "Nepal Community" },
                     ].map(({ icon, text }, i) => (
                       <div key={i} className="flex items-center gap-1.5 text-white/35 text-xs">
                         <span>{icon}</span>
