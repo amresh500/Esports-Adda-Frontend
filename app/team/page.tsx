@@ -44,6 +44,7 @@ export default function TeamDashboardPage() {
   const [playerToRemove, setPlayerToRemove] = useState<{ game: string; playerId: string } | null>(null);
   const [showDeleteTeamModal, setShowDeleteTeamModal] = useState(false);
   const [teamToDelete, setTeamToDelete] = useState<string | null>(null);
+  const [showLeaveTeamModal, setShowLeaveTeamModal] = useState(false);
 
   useEffect(() => { fetchMyTeams(); }, []);
 
@@ -58,10 +59,16 @@ export default function TeamDashboardPage() {
     }
   };
 
-  const fetchTeamDetails = async (teamId: string) => {
+  const fetchTeamDetails = async (teamId: string, isOwner?: boolean) => {
     try {
       const response = await api.get(`/teams/${teamId}`);
-      setSelectedTeam(response.data.data.team);
+      // The detail endpoint is public and doesn't compute isOwner; carry it over
+      // from the list (getMyTeams) so owner-only controls render correctly.
+      const team = response.data.data.team;
+      setSelectedTeam({
+        ...team,
+        isOwner: isOwner !== undefined ? isOwner : team.isOwner,
+      });
     } catch (error: any) {
       showError(error.response?.data?.message || "Failed to fetch team details");
     }
@@ -89,7 +96,7 @@ export default function TeamDashboardPage() {
     try {
       await api.post(`/teams/${selectedTeam._id}/games`, gameRosterForm);
       showSuccess("Game roster added!");
-      fetchTeamDetails(selectedTeam._id);
+      fetchTeamDetails(selectedTeam._id, selectedTeam.isOwner);
     } catch (error: any) {
       showError(error.response?.data?.message || "Failed to add game roster");
     } finally { setSavingGame(false); }
@@ -104,7 +111,7 @@ export default function TeamDashboardPage() {
         { ...playerForm, game });
       showSuccess("Player added!");
       setPlayerForm({ game: "Valorant", username: "", role: "Player", inGameRole: "" });
-      fetchTeamDetails(selectedTeam._id);
+      fetchTeamDetails(selectedTeam._id, selectedTeam.isOwner);
     } catch (error: any) {
       showError(error.response?.data?.message || "Failed to add player");
     } finally { setSavingPlayer(null); }
@@ -119,7 +126,7 @@ export default function TeamDashboardPage() {
       showSuccess("Player removed!");
       setShowRemovePlayerModal(false);
       setPlayerToRemove(null);
-      fetchTeamDetails(selectedTeam._id);
+      fetchTeamDetails(selectedTeam._id, selectedTeam.isOwner);
     } catch (error: any) {
       showError(error.response?.data?.message || "Failed to remove player");
     }
@@ -136,6 +143,20 @@ export default function TeamDashboardPage() {
       fetchMyTeams();
     } catch (error: any) {
       showError(error.response?.data?.message || "Failed to delete team");
+    }
+  };
+
+  const handleLeaveTeam = async () => {
+    try {
+      // Pass the team id so leaving works even when currentTeam isn't set
+      // (e.g. members added via the org/addMember path).
+      await api.post(`/teams/leave`, { teamId: selectedTeam?._id });
+      showSuccess("You have left the team.");
+      setShowLeaveTeamModal(false);
+      setSelectedTeam(null);
+      fetchMyTeams();
+    } catch (error: any) {
+      showError(error.response?.data?.message || "Failed to leave team");
     }
   };
 
@@ -223,7 +244,7 @@ export default function TeamDashboardPage() {
               {teams.length > 0 ? (
                 <div className="p-3 space-y-1">
                   {teams.map((team) => (
-                    <button key={team._id} onClick={() => fetchTeamDetails(team._id)}
+                    <button key={team._id} onClick={() => fetchTeamDetails(team._id, team.isOwner)}
                       className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-all duration-200 cursor-pointer ${
                         selectedTeam?._id === team._id
                           ? 'bg-[#e85d5d]/10 border border-[#e85d5d]/25'
@@ -263,26 +284,35 @@ export default function TeamDashboardPage() {
                       <p className="text-white/35 text-sm">[{selectedTeam.tag}]{selectedTeam.country && ` · ${selectedTeam.country}`}</p>
                       {selectedTeam.description && <p className="text-white/50 text-sm mt-3 max-w-md">{selectedTeam.description}</p>}
                     </div>
-                    <button onClick={() => { setTeamToDelete(selectedTeam._id); setShowDeleteTeamModal(true); }}
-                      className="text-red-400/50 hover:text-red-400 text-xs border border-red-500/15 hover:bg-red-500/[0.08] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer flex-shrink-0">
-                      Delete Team
-                    </button>
+                    {selectedTeam.isOwner ? (
+                      <button onClick={() => { setTeamToDelete(selectedTeam._id); setShowDeleteTeamModal(true); }}
+                        className="text-red-400/50 hover:text-red-400 text-xs border border-red-500/15 hover:bg-red-500/[0.08] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer flex-shrink-0">
+                        Delete Team
+                      </button>
+                    ) : (
+                      <button onClick={() => setShowLeaveTeamModal(true)}
+                        className="text-amber-400/60 hover:text-amber-400 text-xs border border-amber-500/15 hover:bg-amber-500/[0.08] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer flex-shrink-0">
+                        Leave Team
+                      </button>
+                    )}
                   </div>
                 </div>
 
-                {/* Add game roster */}
-                <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] overflow-hidden">
-                  <div className="px-6 py-4 border-b border-white/[0.06]">
-                    <h3 className="font-['Russo_One'] text-sm text-white/60 uppercase tracking-wider">Add Game Roster</h3>
+                {/* Add game roster — owner only */}
+                {selectedTeam.isOwner && (
+                  <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] overflow-hidden">
+                    <div className="px-6 py-4 border-b border-white/[0.06]">
+                      <h3 className="font-['Russo_One'] text-sm text-white/60 uppercase tracking-wider">Add Game Roster</h3>
+                    </div>
+                    <form onSubmit={handleAddGameRoster} className="p-6 flex gap-3">
+                      <select value={gameRosterForm.game} className={`${fieldCls} flex-1`}
+                        onChange={(e) => setGameRosterForm({ game: e.target.value })}>
+                        {GAMES.map((g) => <option key={g} value={g}>{g}</option>)}
+                      </select>
+                      <SaveButton type="submit" saving={savingGame} label="Add Roster" savingLabel="Adding…" className="px-5 py-3 text-sm flex-shrink-0" />
+                    </form>
                   </div>
-                  <form onSubmit={handleAddGameRoster} className="p-6 flex gap-3">
-                    <select value={gameRosterForm.game} className={`${fieldCls} flex-1`}
-                      onChange={(e) => setGameRosterForm({ game: e.target.value })}>
-                      {GAMES.map((g) => <option key={g} value={g}>{g}</option>)}
-                    </select>
-                    <SaveButton type="submit" saving={savingGame} label="Add Roster" savingLabel="Adding…" className="px-5 py-3 text-sm flex-shrink-0" />
-                  </form>
-                </div>
+                )}
 
                 {/* Game rosters */}
                 {selectedTeam.games?.length > 0 && selectedTeam.games.map((gameData: any, index: number) => (
@@ -291,28 +321,30 @@ export default function TeamDashboardPage() {
                       <h3 className="font-['Russo_One'] text-sm text-white">{gameData.game} Roster</h3>
                     </div>
 
-                    {/* Add player form */}
-                    <div className="p-5 border-b border-white/[0.04]">
-                      <p className="text-white/30 text-[10px] uppercase tracking-widest mb-3">Add Player</p>
-                      <form onSubmit={(e) => handleAddPlayer(e, gameData.game)}
-                        className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <input type="text" placeholder="Player username" required className={fieldCls}
-                          value={playerForm.game === gameData.game ? playerForm.username : ""}
-                          onChange={(e) => setPlayerForm({ ...playerForm, game: gameData.game, username: e.target.value })} />
-                        <select className={fieldCls}
-                          value={playerForm.game === gameData.game ? playerForm.role : "Player"}
-                          onChange={(e) => setPlayerForm({ ...playerForm, game: gameData.game, role: e.target.value })}>
-                          {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
-                        </select>
-                        <input type="text" placeholder="In-game role (e.g., Duelist)" className={fieldCls}
-                          value={playerForm.game === gameData.game ? playerForm.inGameRole : ""}
-                          onChange={(e) => setPlayerForm({ ...playerForm, game: gameData.game, inGameRole: e.target.value })} />
-                        <SaveButton type="submit"
-                          saving={savingPlayer === gameData.game}
-                          label="Add Player" savingLabel="Adding…"
-                          className="py-3 text-sm" />
-                      </form>
-                    </div>
+                    {/* Add player form — owner only */}
+                    {selectedTeam.isOwner && (
+                      <div className="p-5 border-b border-white/[0.04]">
+                        <p className="text-white/30 text-[10px] uppercase tracking-widest mb-3">Add Player</p>
+                        <form onSubmit={(e) => handleAddPlayer(e, gameData.game)}
+                          className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <input type="text" placeholder="Player username" required className={fieldCls}
+                            value={playerForm.game === gameData.game ? playerForm.username : ""}
+                            onChange={(e) => setPlayerForm({ ...playerForm, game: gameData.game, username: e.target.value })} />
+                          <select className={fieldCls}
+                            value={playerForm.game === gameData.game ? playerForm.role : "Player"}
+                            onChange={(e) => setPlayerForm({ ...playerForm, game: gameData.game, role: e.target.value })}>
+                            {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+                          </select>
+                          <input type="text" placeholder="In-game role (e.g., Duelist)" className={fieldCls}
+                            value={playerForm.game === gameData.game ? playerForm.inGameRole : ""}
+                            onChange={(e) => setPlayerForm({ ...playerForm, game: gameData.game, inGameRole: e.target.value })} />
+                          <SaveButton type="submit"
+                            saving={savingPlayer === gameData.game}
+                            label="Add Player" savingLabel="Adding…"
+                            className="py-3 text-sm" />
+                        </form>
+                      </div>
+                    )}
 
                     {/* Roster list */}
                     <div className="p-5">
@@ -324,10 +356,12 @@ export default function TeamDashboardPage() {
                                 <p className="text-white/85 text-sm font-semibold">{player.playerName}</p>
                                 <p className="text-white/30 text-xs">{player.role}{player.inGameRole && ` · ${player.inGameRole}`}</p>
                               </div>
-                              <button onClick={() => { setPlayerToRemove({ game: gameData.game, playerId: player.player }); setShowRemovePlayerModal(true); }}
-                                className="text-red-400/40 hover:text-red-400 text-xs transition-colors cursor-pointer">
-                                Remove
-                              </button>
+                              {selectedTeam.isOwner && (
+                                <button onClick={() => { setPlayerToRemove({ game: gameData.game, playerId: player.player }); setShowRemovePlayerModal(true); }}
+                                  className="text-red-400/40 hover:text-red-400 text-xs transition-colors cursor-pointer">
+                                  Remove
+                                </button>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -372,6 +406,17 @@ export default function TeamDashboardPage() {
           confirmButtonClass="bg-red-500 hover:bg-red-600"
           onConfirm={handleDeleteTeam}
           onCancel={() => { setShowDeleteTeamModal(false); setTeamToDelete(null); }}
+        />
+      )}
+      {showLeaveTeamModal && (
+        <ConfirmDialog
+          title="Leave Team?"
+          message="You will be removed from this team's roster. You can be added back later by the team owner."
+          confirmText="Leave Team"
+          cancelText="Cancel"
+          confirmButtonClass="bg-amber-500 hover:bg-amber-600"
+          onConfirm={handleLeaveTeam}
+          onCancel={() => setShowLeaveTeamModal(false)}
         />
       )}
 
