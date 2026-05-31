@@ -23,7 +23,7 @@ interface FlaggedMessage {
   autoFlagged: boolean;
   autoFlagReason: string | null;
   reportCount: number;
-  reports: Report[];
+  reports?: Report[];
   createdAt: string;
 }
 
@@ -35,6 +35,7 @@ export default function MessageModeration() {
   const [totalPages, setTotalPages] = useState(1);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<{ id: string; action: string } | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const games = ["Valorant", "CS2", "PUBG Mobile", "Dota 2", "League of Legends", "Free Fire"];
 
@@ -61,6 +62,7 @@ export default function MessageModeration() {
 
   const handleAction = async (id: string, action: string) => {
     setActionLoading(id);
+    setActionError(null);
     try {
       if (action === "dismiss") {
         await api.patch(`/admin/messages/${id}/dismiss`);
@@ -71,8 +73,11 @@ export default function MessageModeration() {
       }
       setMessages((prev) => prev.filter((m) => m._id !== id));
       setConfirmAction(null);
-    } catch (err) {
-      console.error("Action failed:", err);
+    } catch (err: any) {
+      // Surface the real backend message instead of swallowing it silently
+      const msg = err?.response?.data?.message || err?.message || "Action failed";
+      console.error("Action failed:", err?.response?.status, msg, err);
+      setActionError(`Failed to ${action}: ${msg}`);
     } finally {
       setActionLoading(null);
     }
@@ -82,6 +87,13 @@ export default function MessageModeration() {
     <div>
       <h1 className="text-3xl font-bold text-white mb-2">Message Moderation</h1>
       <p className="text-gray-400 mb-6">Review and take action on flagged chat messages</p>
+
+      {actionError && (
+        <div className="mb-6 bg-red-500/15 border border-red-500/40 text-red-300 px-4 py-3 rounded-lg text-sm flex items-center justify-between">
+          <span>{actionError}</span>
+          <button onClick={() => setActionError(null)} className="text-red-400 hover:text-red-200 ml-4">✕</button>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex gap-4 mb-6">
@@ -144,19 +156,21 @@ export default function MessageModeration() {
                 </div>
               )}
 
-              {/* Reports */}
-              <div className="mb-4">
-                <p className="text-gray-500 text-xs font-medium mb-2">REPORTS</p>
-                <div className="space-y-2">
-                  {msg.reports.map((r, i) => (
-                    <div key={i} className="flex items-center gap-3 text-sm">
-                      <span className="bg-red-500/10 text-red-400 px-2 py-0.5 rounded text-xs">{r.reason}</span>
-                      {r.details && <span className="text-gray-400">{r.details}</span>}
-                      <span className="text-gray-600 text-xs">{new Date(r.createdAt).toLocaleDateString()}</span>
-                    </div>
-                  ))}
+              {/* Reports — auto-flagged messages may have none */}
+              {msg.reports && msg.reports.length > 0 && (
+                <div className="mb-4">
+                  <p className="text-gray-500 text-xs font-medium mb-2">REPORTS</p>
+                  <div className="space-y-2">
+                    {msg.reports.map((r, i) => (
+                      <div key={i} className="flex items-center gap-3 text-sm">
+                        <span className="bg-red-500/10 text-red-400 px-2 py-0.5 rounded text-xs">{r.reason}</span>
+                        {r.details && <span className="text-gray-400">{r.details}</span>}
+                        <span className="text-gray-600 text-xs">{new Date(r.createdAt).toLocaleDateString()}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Actions */}
               {confirmAction?.id === msg._id ? (

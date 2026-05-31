@@ -105,11 +105,17 @@ export default function PlayerProfilePage() {
   const checkAdminStatus = async () => {
     try {
       const r = await api.get(`/org-auth/admin-org`);
-      if (r.data.success) {
+      // Endpoint returns 200 with organization:null for non-org-admins.
+      if (r.data.success && r.data.data?.organization) {
         setAdminOrg(r.data.data.organization);
         localStorage.setItem("isOrgAdmin",   "true");
         localStorage.setItem("adminOrgId",   r.data.data.organization._id);
         localStorage.setItem("adminOrgName", r.data.data.organization.organizationName);
+      } else {
+        setAdminOrg(null);
+        localStorage.removeItem("isOrgAdmin");
+        localStorage.removeItem("adminOrgId");
+        localStorage.removeItem("adminOrgName");
       }
     } catch {
       setAdminOrg(null);

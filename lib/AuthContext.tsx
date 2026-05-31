@@ -72,7 +72,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             headers: { "Content-Type": "application/json" },
           });
           const adminData = await adminRes.json();
-          if (adminData.success) {
+          // Endpoint now returns 200 with isAdmin:false for non-org-admins,
+          // so gate on the org being present rather than just success.
+          if (adminData.success && adminData.data?.organization) {
             setIsOrgAdmin(true);
             localStorage.setItem("isOrgAdmin",   adminData.data.organization._id);
             localStorage.setItem("adminOrgId",   adminData.data.organization._id);

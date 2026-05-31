@@ -315,7 +315,9 @@ function TournamentManagePageInner() {
         setIsOrganizer(orgResponse.data.data.organization._id === tournamentOrgId);
       } else {
         const adminResponse = await api.get(`/org-auth/admin-org`);
-        setIsOrganizer(adminResponse.data.data.organization._id === tournamentOrgId);
+        // organization is null for non-org-admins (endpoint returns 200).
+        const adminOrg = adminResponse.data.data?.organization;
+        setIsOrganizer(!!adminOrg && adminOrg._id === tournamentOrgId);
       }
     } catch { setIsOrganizer(false); }
   };

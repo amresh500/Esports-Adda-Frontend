@@ -65,16 +65,19 @@ export default function AdminDashboardPage() {
   const fetchOrganization = async () => {
     try {
       const response = await api.get(`/org-auth/admin-org`);
-      setOrganization(response.data.data.organization);
-      setLoading(false);
-    } catch (error: any) {
-      console.error('Fetch admin org error:', error);
-      if (error.response?.status === 403) {
+      const org = response.data.data?.organization;
+      // Endpoint returns 200 with organization:null for non-org-admins.
+      if (!org) {
         localStorage.removeItem('isOrgAdmin');
         localStorage.removeItem('adminOrgId');
         localStorage.removeItem('adminOrgName');
         router.push('/profile');
+        return;
       }
+      setOrganization(org);
+      setLoading(false);
+    } catch (error: any) {
+      console.error('Fetch admin org error:', error);
       setError('Failed to load organization data');
       setLoading(false);
     }
